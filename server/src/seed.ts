@@ -1,15 +1,22 @@
-// Seeds a lively demo world: a primary "you" account, a cast of people to swipe
-// on, some incoming likes, and a couple of ready-made matches with chat history.
+// Seeds a lively Instagram-style demo world: profiles with posts, a follow
+// graph, likes & comments, a few DM threads, and a populated board (掲示板).
 import bcrypt from 'bcryptjs';
 import { config } from './config.js';
 import { db, setInterests, setPhotos } from './db.js';
 
+const PASSWORD = 'password123';
+
 function avatar(id: string, name: string): string {
   return `${config.publicUrl}/api/avatar/${id}.svg?name=${encodeURIComponent(name)}`;
+}
+function image(seed: string): string {
+  // No name → abstract gradient that reads as a photo.
+  return `${config.publicUrl}/api/avatar/${seed}.svg`;
 }
 
 interface SeedUser {
   key: string;
+  username: string;
   email: string;
   displayName: string;
   birthdate: string;
@@ -18,267 +25,246 @@ interface SeedUser {
   headline: string;
   bio: string;
   location: string;
+  link: string;
   interests: string[];
-  photoCount: number;
+  posts: string[]; // captions
 }
-
-const PASSWORD = 'password123';
 
 const PEOPLE: SeedUser[] = [
   {
-    key: 'you',
-    email: 'you@mingle.app',
-    displayName: 'あなた',
-    birthdate: '1996-04-12',
-    gender: 'unspecified',
-    pronouns: '',
-    headline: 'はじめての街さんぽが好き',
-    bio: 'コーヒーと写真と散歩。同じ趣味の友だちを探しています。',
-    location: 'Tokyo',
-    interests: ['Coffee', 'Photography', 'Hiking', 'Indie Music'],
-    photoCount: 2,
+    key: 'you', username: 'you', email: 'you@mingle.app', displayName: 'あなた',
+    birthdate: '1996-04-12', gender: 'unspecified', pronouns: '',
+    headline: '街さんぽと喫茶店めぐり', bio: 'コーヒーと写真と散歩。気の合う人とゆるくつながりたい。',
+    location: 'Tokyo', link: '', interests: ['Coffee', 'Photography', 'Hiking', 'Indie Music'],
+    posts: ['今日の一杯 ☕️', '路地裏さんぽ', '朝の光が好き'],
   },
   {
-    key: 'mio',
-    email: 'mio@mingle.app',
-    displayName: 'Mio',
-    birthdate: '1998-09-03',
-    gender: 'female',
-    pronouns: 'she/her',
-    headline: 'Film photographer & matcha addict',
-    bio: 'Weekend hikes, vinyl crates, and finding the best matcha in town.',
-    location: 'Tokyo',
-    interests: ['Photography', 'Hiking', 'Matcha', 'Vinyl'],
-    photoCount: 3,
+    key: 'mio', username: 'mio.films', email: 'mio@mingle.app', displayName: 'Mio',
+    birthdate: '1998-09-03', gender: 'female', pronouns: 'she/her',
+    headline: 'フィルムカメラと抹茶', bio: '週末はハイキング、平日はレコード堀り。抹茶スイーツに目がない。',
+    location: 'Tokyo', link: 'mio.photo', interests: ['Photography', 'Hiking', 'Matcha', 'Vinyl'],
+    posts: ['フィルムの粒状感たまらない', '高尾山からの景色', '今週のレコード'],
   },
   {
-    key: 'ren',
-    email: 'ren@mingle.app',
-    displayName: 'Ren',
-    birthdate: '1994-01-22',
-    gender: 'male',
-    pronouns: 'he/him',
-    headline: 'Bouldering > everything',
-    bio: 'Climb on weekdays, cook ramen on weekends. Looking for climbing buddies.',
-    location: 'Yokohama',
-    interests: ['Bouldering', 'Ramen', 'Travel', 'Coffee'],
-    photoCount: 2,
+    key: 'ren', username: 'ren_climbs', email: 'ren@mingle.app', displayName: 'Ren',
+    birthdate: '1994-01-22', gender: 'male', pronouns: 'he/him',
+    headline: 'ボルダリングと自炊', bio: '平日クライム、週末ラーメン。一緒に登る仲間募集中。',
+    location: 'Yokohama', link: '', interests: ['Bouldering', 'Ramen', 'Travel', 'Coffee'],
+    posts: ['新しい課題、完登！', '自家製チャーシュー'],
   },
   {
-    key: 'sora',
-    email: 'sora@mingle.app',
-    displayName: 'Sora',
-    birthdate: '1999-11-30',
-    gender: 'nonbinary',
-    pronouns: 'they/them',
-    headline: 'Synth nerd, plant parent',
-    bio: 'Making lo-fi beats and over-watering my monstera. Say hi about music gear!',
-    location: 'Tokyo',
-    interests: ['Indie Music', 'Synths', 'Plants', 'Gaming'],
-    photoCount: 2,
+    key: 'sora', username: 'sora.synth', email: 'sora@mingle.app', displayName: 'Sora',
+    birthdate: '1999-11-30', gender: 'nonbinary', pronouns: 'they/them',
+    headline: 'シンセと観葉植物', bio: 'lo-fi作ってます。モンステラ育ててます。機材トーク歓迎。',
+    location: 'Tokyo', link: 'soundcloud.com/sora', interests: ['Indie Music', 'Synths', 'Plants', 'Gaming'],
+    posts: ['新しいパッチ組んだ', 'うちのモンステラ', 'ジャム配信中'],
   },
   {
-    key: 'aoi',
-    email: 'aoi@mingle.app',
-    displayName: 'Aoi',
-    birthdate: '1997-06-18',
-    gender: 'female',
-    pronouns: 'she/her',
-    headline: 'Trail runner & dog person',
-    bio: 'Marathon training, third-wave coffee, and my shiba named Mochi.',
-    location: 'Chiba',
-    interests: ['Running', 'Coffee', 'Dogs', 'Hiking'],
-    photoCount: 3,
+    key: 'aoi', username: 'aoi.runs', email: 'aoi@mingle.app', displayName: 'Aoi',
+    birthdate: '1997-06-18', gender: 'female', pronouns: 'she/her',
+    headline: 'トレランと柴犬', bio: 'マラソン練習中。サードウェーブコーヒーと、柴犬のもち。',
+    location: 'Chiba', link: '', interests: ['Running', 'Coffee', 'Dogs', 'Hiking'],
+    posts: ['今朝の20km', 'もち、お散歩日和', 'ご褒美ラテ'],
   },
   {
-    key: 'kai',
-    email: 'kai@mingle.app',
-    displayName: 'Kai',
-    birthdate: '1993-03-09',
-    gender: 'male',
-    pronouns: 'he/him',
-    headline: 'Surfer who codes',
-    bio: 'Dawn patrol then standups. Always up for a beach trip or a side project.',
-    location: 'Kamakura',
-    interests: ['Surfing', 'Coding', 'Travel', 'Photography'],
-    photoCount: 2,
+    key: 'kai', username: 'kai.surf', email: 'kai@mingle.app', displayName: 'Kai',
+    birthdate: '1993-03-09', gender: 'male', pronouns: 'he/him',
+    headline: '波とコード', bio: '朝サーフしてから出社。ビーチもサイドプロジェクトも歓迎。',
+    location: 'Kamakura', link: '', interests: ['Surfing', 'Coding', 'Travel', 'Photography'],
+    posts: ['ドーンパトロール', '今日のセット'],
   },
   {
-    key: 'nao',
-    email: 'nao@mingle.app',
-    displayName: 'Nao',
-    birthdate: '2000-02-14',
-    gender: 'female',
-    pronouns: 'she/her',
-    headline: 'Bookworm & board game host',
-    bio: 'Hosting board game nights, reading sci-fi, learning to paint.',
-    location: 'Tokyo',
-    interests: ['Board Games', 'Reading', 'Art', 'Coffee'],
-    photoCount: 2,
+    key: 'nao', username: 'nao.reads', email: 'nao@mingle.app', displayName: 'Nao',
+    birthdate: '2000-02-14', gender: 'female', pronouns: 'she/her',
+    headline: '読書とボドゲ', bio: 'ボードゲーム会主催。SF読書と水彩はじめました。',
+    location: 'Tokyo', link: '', interests: ['Board Games', 'Reading', 'Art', 'Coffee'],
+    posts: ['今月の積読', 'ボドゲ会やります', '水彩練習'],
   },
   {
-    key: 'taku',
-    email: 'taku@mingle.app',
-    displayName: 'Taku',
-    birthdate: '1995-08-27',
-    gender: 'male',
-    pronouns: 'he/him',
-    headline: 'Cyclist, jazz, street food',
-    bio: 'Long rides on Sundays, jazz bars on Fridays. Tell me your favourite ramen spot.',
-    location: 'Saitama',
-    interests: ['Cycling', 'Jazz', 'Ramen', 'Travel'],
-    photoCount: 2,
+    key: 'emi', username: 'emi.ceramics', email: 'emi@mingle.app', displayName: 'Emi',
+    birthdate: '1996-12-05', gender: 'female', pronouns: 'she/her',
+    headline: '陶芸とスローライフ', bio: '器をつくり、お茶を淹れ、植物を育てる。穏やかに。',
+    location: 'Tokyo', link: '', interests: ['Ceramics', 'Tea', 'Plants', 'Art'],
+    posts: ['焼き上がりました', '新作のマグ', '今日の一服'],
   },
   {
-    key: 'emi',
-    email: 'emi@mingle.app',
-    displayName: 'Emi',
-    birthdate: '1996-12-05',
-    gender: 'female',
-    pronouns: 'she/her',
-    headline: 'Ceramics & slow living',
-    bio: 'Throwing pots, brewing tea, collecting houseplants. Calm energy only.',
-    location: 'Tokyo',
-    interests: ['Ceramics', 'Tea', 'Plants', 'Art'],
-    photoCount: 3,
+    key: 'haru', username: 'haru.live', email: 'haru@mingle.app', displayName: 'Haru',
+    birthdate: '1992-07-19', gender: 'nonbinary', pronouns: 'they/them',
+    headline: 'フェス遠征勢', bio: '毎週どこかでライブ。インディーもテクノも、いい現場なら何でも。',
+    location: 'Tokyo', link: '', interests: ['Indie Music', 'Festivals', 'Travel', 'Photography'],
+    posts: ['昨夜の現場最高だった', '次の遠征先'],
   },
   {
-    key: 'haru',
-    email: 'haru@mingle.app',
-    displayName: 'Haru',
-    birthdate: '1992-07-19',
-    gender: 'nonbinary',
-    pronouns: 'they/them',
-    headline: 'Festival chaser',
-    bio: 'Live music every weekend. Indie, techno, anything with a good crowd.',
-    location: 'Tokyo',
-    interests: ['Indie Music', 'Festivals', 'Travel', 'Photography'],
-    photoCount: 2,
+    key: 'yui', username: 'yui.yoga', email: 'yui@mingle.app', displayName: 'Yui',
+    birthdate: '2001-05-08', gender: 'female', pronouns: 'she/her',
+    headline: 'ヨガと朝活', bio: '朝ヨガ、スムージー研究、たくさんのジャーナリング。',
+    location: 'Tokyo', link: '', interests: ['Yoga', 'Cooking', 'Reading', 'Running'],
+    posts: ['サンライズヨガ', '今朝のスムージー'],
   },
   {
-    key: 'yui',
-    email: 'yui@mingle.app',
-    displayName: 'Yui',
-    birthdate: '2001-05-08',
-    gender: 'female',
-    pronouns: 'she/her',
-    headline: 'Yoga teacher in training',
-    bio: 'Sunrise yoga, smoothie experiments, and a lot of journaling.',
-    location: 'Tokyo',
-    interests: ['Yoga', 'Cooking', 'Reading', 'Running'],
-    photoCount: 2,
+    key: 'jun', username: 'jun.kitchen', email: 'jun@mingle.app', displayName: 'Jun',
+    birthdate: '1990-10-11', gender: 'male', pronouns: 'he/him',
+    headline: '家ごはんとウイスキー', bio: '人生最高のカレーを作ります。映画とスロートラベルも。',
+    location: 'Tokyo', link: '', interests: ['Cooking', 'Whisky', 'Film', 'Travel'],
+    posts: ['スパイスから作るカレー', '週末の一杯'],
+  },
+];
+
+interface BoardSeed {
+  authorKey: string;
+  category: string;
+  title: string;
+  body: string;
+  comments: [string, string][]; // [authorKey, body]
+}
+
+const BOARD: BoardSeed[] = [
+  {
+    authorKey: 'ren', category: 'recruit', title: '週末ボルダリング一緒に行きませんか？',
+    body: '土曜の午前、B-Pump秋葉原で登ります。初心者の方も大歓迎です！',
+    comments: [['aoi', '行きたいです！初心者でも大丈夫ですか？'], ['ren', 'もちろんです、ゆるくやりましょう〜']],
   },
   {
-    key: 'jun',
-    email: 'jun@mingle.app',
-    displayName: 'Jun',
-    birthdate: '1990-10-11',
-    gender: 'male',
-    pronouns: 'he/him',
-    headline: 'Home chef & whisky curious',
-    bio: 'I will cook you the best curry of your life. Also into film and slow travel.',
-    location: 'Tokyo',
-    interests: ['Cooking', 'Whisky', 'Film', 'Travel'],
-    photoCount: 2,
+    authorKey: 'nao', category: 'event', title: '【今週末】ボードゲーム会@渋谷',
+    body: '7〜8人でわいわいやります。手ぶらでOK、軽食持ち寄り歓迎。',
+    comments: [['jun', 'カタンあります？'], ['nao', 'ありますよ〜！']],
+  },
+  {
+    authorKey: 'mio', category: 'hobby', title: 'フィルムカメラ好き集まれ',
+    body: 'おすすめの現像所や作例を共有しましょう。最近はポートラ400にハマってます。',
+    comments: [['kai', 'ポートラいいですよね、自分はトライX派です']],
+  },
+  {
+    authorKey: 'jun', category: 'question', title: '都内でスパイスが安く買えるお店',
+    body: 'カレー作り用にホールスパイスをまとめ買いしたいです。おすすめありますか？',
+    comments: [['emi', '新大久保のお店が安かったですよ']],
+  },
+  {
+    authorKey: 'haru', category: 'chat', title: '最近行ってよかったライブ・フェス',
+    body: 'ジャンル問わず、今年行ってよかった現場を教えてください！',
+    comments: [],
   },
 ];
 
 function run() {
-  console.log('Seeding Mingle demo data…');
+  console.log('Seeding Mingle (Instagram-style) demo data…');
   const hash = bcrypt.hashSync(PASSWORD, 10);
   const now = new Date();
 
-  // Wipe existing data for an idempotent seed.
   db.exec(
-    'DELETE FROM messages; DELETE FROM matches; DELETE FROM swipes; DELETE FROM blocks; DELETE FROM reports; DELETE FROM user_interests; DELETE FROM photos; DELETE FROM users;',
+    `DELETE FROM board_comments; DELETE FROM board_posts; DELETE FROM messages; DELETE FROM conversations;
+     DELETE FROM post_comments; DELETE FROM post_likes; DELETE FROM posts; DELETE FROM follows;
+     DELETE FROM blocks; DELETE FROM reports; DELETE FROM user_interests; DELETE FROM photos; DELETE FROM users;`,
   );
 
   const ids: Record<string, string> = {};
+  const postIds: Record<string, string[]> = {};
 
   PEOPLE.forEach((p, idx) => {
     const id = crypto.randomUUID();
     ids[p.key] = id;
-    // Stagger last-active times so the deck ordering looks natural.
-    const lastActive = new Date(now.getTime() - idx * 37 * 60 * 1000).toISOString();
+    const lastActive = new Date(now.getTime() - idx * 31 * 60 * 1000).toISOString();
     db.prepare(
-      `INSERT INTO users (id, email, password_hash, display_name, birthdate, gender, pronouns,
-        headline, bio, location, verified, created_at, last_active_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (id, email, username, password_hash, display_name, birthdate, gender, pronouns,
+        headline, bio, location, link, verified, created_at, last_active_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
-      id,
-      p.email,
-      hash,
-      p.displayName,
-      p.birthdate,
-      p.gender,
-      p.pronouns,
-      p.headline,
-      p.bio,
-      p.location,
-      idx % 4 === 0 ? 1 : 0,
-      now.toISOString(),
-      lastActive,
+      id, p.email, p.username, hash, p.displayName, p.birthdate, p.gender, p.pronouns,
+      p.headline, p.bio, p.location, p.link, idx % 4 === 0 ? 1 : 0, now.toISOString(), lastActive,
     );
     setInterests(id, p.interests);
-    setPhotos(
-      id,
-      Array.from({ length: p.photoCount }, (_, i) => avatar(`${id}-${i}`, p.displayName)),
-    );
+    setPhotos(id, [avatar(`${id}-a`, p.displayName)]);
+
+    postIds[p.key] = [];
+    p.posts.forEach((caption, pi) => {
+      const pid = crypto.randomUUID();
+      postIds[p.key].push(pid);
+      const created = new Date(now.getTime() - (idx * 3 + pi) * 5 * 60 * 60 * 1000).toISOString();
+      db.prepare(
+        'INSERT INTO posts (id, user_id, image_url, caption, created_at) VALUES (?, ?, ?, ?, ?)',
+      ).run(pid, id, image(`${pid}`), caption, created);
+    });
   });
 
-  const you = ids['you'];
+  const keys = PEOPLE.map((p) => p.key);
 
-  // Some people already liked "you" → fuels the deck boost and "who liked you".
-  const likedYou: [string, string][] = [
-    ['mio', 'superlike'],
-    ['aoi', 'like'],
-    ['nao', 'like'],
-    ['haru', 'like'],
-  ];
-  for (const [key, action] of likedYou) {
-    db.prepare(
-      'INSERT OR IGNORE INTO swipes (id, swiper_id, target_id, action, created_at) VALUES (?, ?, ?, ?, ?)',
-    ).run(crypto.randomUUID(), ids[key], you, action, now.toISOString());
+  // Follow graph: everyone follows a few others; "you" follows several.
+  function follow(a: string, b: string) {
+    db.prepare('INSERT OR IGNORE INTO follows (follower_id, following_id, created_at) VALUES (?, ?, ?)').run(
+      ids[a], ids[b], now.toISOString(),
+    );
   }
+  ['mio', 'ren', 'aoi', 'sora', 'emi', 'nao'].forEach((k) => follow('you', k));
+  ['mio', 'aoi', 'nao', 'haru', 'kai'].forEach((k) => follow(k, 'you'));
+  keys.forEach((a) => {
+    keys.filter((b) => b !== a).slice(0, 3).forEach((b) => follow(a, b));
+  });
 
-  // A couple of established matches with chat history.
-  function makeMatch(otherKey: string, isSuper: number, messages: [string, string][]) {
-    const other = ids[otherKey];
-    const [a, b] = [you, other].sort();
-    const matchId = crypto.randomUUID();
+  // Likes & comments spread across posts.
+  const allPosts: { pid: string; ownerKey: string }[] = [];
+  for (const k of keys) for (const pid of postIds[k]) allPosts.push({ pid, ownerKey: k });
+  allPosts.forEach(({ pid }, i) => {
+    keys.slice(0, 4 + (i % 5)).forEach((k) => {
+      db.prepare('INSERT OR IGNORE INTO post_likes (post_id, user_id, created_at) VALUES (?, ?, ?)').run(
+        pid, ids[k], now.toISOString(),
+      );
+    });
+  });
+  const sampleComments = ['素敵です！', 'いいですね〜', 'どこで撮ったんですか？', '行ってみたい', 'センスある✨'];
+  allPosts.slice(0, 12).forEach(({ pid }, i) => {
+    const commenter = keys[(i + 2) % keys.length];
+    db.prepare(
+      'INSERT INTO post_comments (id, post_id, user_id, body, created_at) VALUES (?, ?, ?, ?, ?)',
+    ).run(crypto.randomUUID(), pid, ids[commenter], sampleComments[i % sampleComments.length], now.toISOString());
+  });
+
+  // A couple of DM threads for "you".
+  function dm(otherKey: string, msgs: [string, string][]) {
+    const [a, b] = [ids['you'], ids[otherKey]].sort();
+    const cid = crypto.randomUUID();
     const created = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    let lastTs = created;
     db.prepare(
-      'INSERT INTO matches (id, user_a, user_b, is_super, created_at) VALUES (?, ?, ?, ?, ?)',
-    ).run(matchId, a, b, isSuper, created);
-    db.prepare(
-      'INSERT OR IGNORE INTO swipes (id, swiper_id, target_id, action, created_at) VALUES (?, ?, ?, ?, ?)',
-    ).run(crypto.randomUUID(), you, other, isSuper ? 'superlike' : 'like', created);
-    db.prepare(
-      'INSERT OR IGNORE INTO swipes (id, swiper_id, target_id, action, created_at) VALUES (?, ?, ?, ?, ?)',
-    ).run(crypto.randomUUID(), other, you, 'like', created);
-    messages.forEach(([senderKey, body], i) => {
-      const senderId = senderKey === 'you' ? you : other;
-      const ts = new Date(now.getTime() - (messages.length - i) * 11 * 60 * 1000).toISOString();
-      const readAt = senderKey === 'you' ? ts : null;
+      'INSERT INTO conversations (id, user_a, user_b, created_at, last_message_at) VALUES (?, ?, ?, ?, ?)',
+    ).run(cid, a, b, created, created);
+    msgs.forEach(([sender, body], i) => {
+      const ts = new Date(now.getTime() - (msgs.length - i) * 13 * 60 * 1000).toISOString();
+      lastTs = ts;
+      const readAt = sender === 'you' ? ts : null;
       db.prepare(
-        'INSERT INTO messages (id, match_id, sender_id, body, created_at, read_at) VALUES (?, ?, ?, ?, ?, ?)',
-      ).run(crypto.randomUUID(), matchId, senderId, body, ts, readAt);
+        'INSERT INTO messages (id, conversation_id, sender_id, body, created_at, read_at) VALUES (?, ?, ?, ?, ?, ?)',
+      ).run(crypto.randomUUID(), cid, sender === 'you' ? ids['you'] : ids[otherKey], body, ts, readAt);
+    });
+    db.prepare('UPDATE conversations SET last_message_at = ? WHERE id = ?').run(lastTs, cid);
+  }
+  dm('mio', [
+    ['mio', 'はじめまして！フィルムの作例めっちゃ好みでした📷'],
+    ['you', 'ありがとうございます！Mioさんの抹茶の投稿も最高です🍵'],
+    ['mio', '今度おすすめの喫茶店ご一緒しません？'],
+  ]);
+  dm('ren', [
+    ['ren', 'プロフィール見ました！ハイキング好きなんですね'],
+    ['you', 'はい！今度どこか登りましょう⛰'],
+  ]);
+
+  // Board threads + comments.
+  for (const t of BOARD) {
+    const bid = crypto.randomUUID();
+    const created = new Date(now.getTime() - Math.random() * 3 * 24 * 60 * 60 * 1000).toISOString();
+    db.prepare(
+      'INSERT INTO board_posts (id, user_id, category, title, body, image_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    ).run(bid, ids[t.authorKey], t.category, t.title, t.body, '', created);
+    t.comments.forEach(([k, body], i) => {
+      const ts = new Date(new Date(created).getTime() + (i + 1) * 40 * 60 * 1000).toISOString();
+      db.prepare(
+        'INSERT INTO board_comments (id, board_post_id, user_id, body, created_at) VALUES (?, ?, ?, ?, ?)',
+      ).run(crypto.randomUUID(), bid, ids[k], body, ts);
     });
   }
 
-  makeMatch('ren', 0, [
-    ['ren', 'Hey! Saw you climb too — which gym do you go to? 🧗'],
-    ['you', 'Mostly B-Pump Akihabara! You?'],
-    ['ren', 'Same! We should grab a session this weekend.'],
-  ]);
-  makeMatch('emi', 1, [
-    ['emi', 'Your photography is gorgeous 📷'],
-    ['you', 'Thank you! Your ceramics are unreal 😍'],
-  ]);
-
   console.log('Seed complete.');
   console.log('Demo login →  email: you@mingle.app   password: password123');
-  console.log(`Created ${PEOPLE.length} users.`);
+  console.log(`Created ${PEOPLE.length} users, ${allPosts.length} posts, ${BOARD.length} board threads.`);
 }
 
 run();

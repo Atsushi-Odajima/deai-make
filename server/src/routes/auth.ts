@@ -16,6 +16,22 @@ const registerSchema = z.object({
   gender: z.enum(['female', 'male', 'nonbinary', 'other', 'unspecified']).default('unspecified'),
 });
 
+// Derive a unique @handle from the display name (ascii slug + counter fallback).
+function uniqueUsername(displayName: string): string {
+  let base = displayName
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, '')
+    .slice(0, 16);
+  if (!base) base = 'user';
+  let candidate = base;
+  let n = 0;
+  while (db.prepare('SELECT 1 FROM users WHERE username = ?').get(candidate)) {
+    n += 1;
+    candidate = `${base}${n}`;
+  }
+  return candidate;
+}
+
 function mustBe18(birthdate: string): boolean {
   const dob = new Date(birthdate);
   const cutoff = new Date();
@@ -44,12 +60,13 @@ authRouter.post('/register', (req, res) => {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   const hash = bcrypt.hashSync(password, 10);
+  const username = uniqueUsername(displayName);
   db.prepare(
-    `INSERT INTO users (id, email, password_hash, display_name, birthdate, gender, created_at, last_active_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(id, normalizedEmail, hash, displayName, birthdate, gender, now, now);
+    `INSERT INTO users (id, email, username, password_hash, display_name, birthdate, gender, created_at, last_active_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(id, normalizedEmail, username, hash, displayName, birthdate, gender, now, now);
 
-  // Give every new account a generated avatar so the deck never shows blanks.
+  // Give every new account a generated avatar so profiles never show blanks.
   setPhotos(id, [`${config.publicUrl}/api/avatar/${id}.svg?name=${encodeURIComponent(displayName)}`]);
   setInterests(id, []);
 

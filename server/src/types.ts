@@ -1,21 +1,28 @@
-// Shared API types. These intentionally mirror what the web client (and the
-// future iOS app) consume, so the REST contract stays the single source of truth.
+// Shared API types — the REST contract that both the web client and the future
+// iOS app implement.
 
 export type Gender = 'female' | 'male' | 'nonbinary' | 'other' | 'unspecified';
 
 export interface PublicUser {
   id: string;
+  username: string;
   displayName: string;
   age: number | null;
   bio: string;
   headline: string;
   location: string;
+  link: string;
   gender: Gender;
   pronouns: string;
   photos: string[];
   interests: string[];
   verified: boolean;
   lastActiveAt: string;
+  followersCount: number;
+  followingCount: number;
+  postsCount: number;
+  isFollowing: boolean;
+  followsYou: boolean;
 }
 
 export interface MeUser extends PublicUser {
@@ -26,24 +33,65 @@ export interface MeUser extends PublicUser {
   createdAt: string;
 }
 
-export type SwipeAction = 'like' | 'pass' | 'superlike';
-
-export interface MatchSummary {
+export interface PostAuthor {
   id: string;
-  user: PublicUser;
+  username: string;
+  displayName: string;
+  avatar: string;
+  verified: boolean;
+}
+
+export interface Post {
+  id: string;
+  author: PostAuthor;
+  imageUrl: string;
+  caption: string;
   createdAt: string;
-  lastMessage: ChatMessage | null;
-  unreadCount: number;
-  isSuper: boolean;
+  likeCount: number;
+  commentCount: number;
+  likedByMe: boolean;
+}
+
+export interface Comment {
+  id: string;
+  author: PostAuthor;
+  body: string;
+  createdAt: string;
 }
 
 export interface ChatMessage {
   id: string;
-  matchId: string;
+  conversationId: string;
   senderId: string;
   body: string;
   createdAt: string;
   readAt: string | null;
+}
+
+export interface ConversationSummary {
+  id: string;
+  user: PostAuthor;
+  lastMessage: ChatMessage | null;
+  unreadCount: number;
+  updatedAt: string;
+}
+
+export interface BoardPost {
+  id: string;
+  author: PostAuthor;
+  category: string;
+  title: string;
+  body: string;
+  imageUrl: string;
+  createdAt: string;
+  commentCount: number;
+}
+
+export interface BoardComment {
+  id: string;
+  author: PostAuthor;
+  body: string;
+  createdAt: string;
 }
 
 export interface AuthResponse {

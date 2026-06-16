@@ -1,35 +1,34 @@
 import { NavLink } from 'react-router-dom';
-import { useIncomingLikes, useMatches } from '../api/hooks';
-import { IconCards, IconChat, IconSparkle, IconUser } from './icons';
+import { Avatar } from './Avatar';
+import { IconBoard, IconHome, IconPlus, IconSearch } from './icons';
+import { useAuth } from '../store/auth';
 
 export function BottomNav() {
-  const matches = useMatches();
-  const likes = useIncomingLikes();
-
-  const unread =
-    matches.data?.matches.reduce((sum, m) => sum + m.unreadCount, 0) ?? 0;
-  const likeCount = likes.data?.likes.length ?? 0;
-
-  const items = [
-    { to: '/app/discover', label: '見つける', icon: IconCards, count: 0 },
-    { to: '/app/likes', label: 'いいね', icon: IconSparkle, count: likeCount },
-    { to: '/app/matches', label: 'トーク', icon: IconChat, count: unread },
-    { to: '/app/profile', label: 'プロフィール', icon: IconUser, count: 0 },
-  ];
+  const me = useAuth((s) => s.user);
 
   return (
-    <nav className="bottom-nav">
-      {items.map(({ to, label, icon: Icon, count }) => (
-        <NavLink
-          key={to}
-          to={to}
-          className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-        >
-          <Icon width={24} height={24} />
-          <span>{label}</span>
-          {count > 0 && <span className="nav-count">{count > 99 ? '99+' : count}</span>}
-        </NavLink>
-      ))}
+    <nav className="bottom-nav ig">
+      <NavLink to="/app/home" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+        {({ isActive }) => <IconHome width={26} height={26} strokeWidth={isActive ? 2.6 : 2} />}
+      </NavLink>
+      <NavLink to="/app/search" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+        {({ isActive }) => <IconSearch width={26} height={26} strokeWidth={isActive ? 2.6 : 2} />}
+      </NavLink>
+      <NavLink to="/app/create" className="nav-item nav-create" aria-label="投稿する">
+        <span className="nav-create-btn">
+          <IconPlus width={24} height={24} strokeWidth={2.4} />
+        </span>
+      </NavLink>
+      <NavLink to="/app/board" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+        {({ isActive }) => <IconBoard width={26} height={26} strokeWidth={isActive ? 2.6 : 2} />}
+      </NavLink>
+      <NavLink to="/app/profile" className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
+        {({ isActive }) => (
+          <span className={`nav-avatar${isActive ? ' active' : ''}`}>
+            <Avatar src={me?.photos[0]} name={me?.displayName ?? ''} size={26} />
+          </span>
+        )}
+      </NavLink>
     </nav>
   );
 }

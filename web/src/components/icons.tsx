@@ -121,3 +121,68 @@ export const IconSparkle = (p: P) => (
     <path d="M12 2c.6 3.8 2.2 5.4 6 6-3.8.6-5.4 2.2-6 6-.6-3.8-2.2-5.4-6-6 3.8-.6 5.4-2.2 6-6Z" />
   </svg>
 );
+
+export const IconHome = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M3 10.5 12 3l9 7.5" />
+    <path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" />
+    <path d="M9.5 21v-6h5v6" />
+  </svg>
+);
+
+export const IconSearch = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.2-3.2" />
+  </svg>
+);
+
+export const IconGrid = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="3" y="3" width="7" height="7" rx="1" />
+    <rect x="14" y="3" width="7" height="7" rx="1" />
+    <rect x="3" y="14" width="7" height="7" rx="1" />
+    <rect x="14" y="14" width="7" height="7" rx="1" />
+  </svg>
+);
+
+export const IconBoard = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="4" y="3" width="16" height="18" rx="2.5" />
+    <path d="M8 8h8M8 12h8M8 16h5" />
+  </svg>
+);
+
+export const IconHeartFilled = (p: P) => (
+  <svg {...base({ fill: 'currentColor', stroke: 'currentColor', ...p })}>
+    <path d="M19 5.6a4.7 4.7 0 0 0-7 .6 4.7 4.7 0 0 0-7-.6 4.9 4.9 0 0 0 0 7L12 20l7-7.4a4.9 4.9 0 0 0 0-7Z" />
+  </svg>
+);
+
+export const IconComment = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M21 11.5a8.4 8.4 0 0 1-11.9 7.6L3 21l1.9-6A8.4 8.4 0 1 1 21 11.5Z" />
+  </svg>
+);
+
+export const IconDM = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M22 3 11 14" />
+    <path d="M22 3 15 21l-4-7-7-4 18-7Z" />
+  </svg>
+);
+
+export const IconLink = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1" />
+    <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" />
+  </svg>
+);
+
+export const IconMore = (p: P) => (
+  <svg {...base({ fill: 'currentColor', stroke: 'none', ...p })}>
+    <circle cx="5" cy="12" r="1.6" />
+    <circle cx="12" cy="12" r="1.6" />
+    <circle cx="19" cy="12" r="1.6" />
+  </svg>
+);

@@ -20,8 +20,10 @@ safetyRouter.post('/block/:id', (req: AuthedRequest, res) => {
     targetId,
     now,
   );
-  const [a, b] = [me, targetId].sort();
-  db.prepare('DELETE FROM matches WHERE user_a = ? AND user_b = ?').run(a, b);
+  // Blocking severs the social graph in both directions.
+  db.prepare(
+    'DELETE FROM follows WHERE (follower_id = ? AND following_id = ?) OR (follower_id = ? AND following_id = ?)',
+  ).run(me, targetId, targetId, me);
   res.json({ ok: true });
 });
 

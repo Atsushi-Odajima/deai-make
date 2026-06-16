@@ -22,9 +22,11 @@ export function EditProfile() {
   const show = useToast((s) => s.show);
 
   const [displayName, setDisplayName] = useState(user?.displayName ?? '');
+  const [username, setUsername] = useState(user?.username ?? '');
   const [headline, setHeadline] = useState(user?.headline ?? '');
   const [bio, setBio] = useState(user?.bio ?? '');
   const [location, setLocation] = useState(user?.location ?? '');
+  const [link, setLink] = useState(user?.link ?? '');
   const [pronouns, setPronouns] = useState(user?.pronouns ?? '');
   const [gender, setGender] = useState(user?.gender ?? 'unspecified');
   const [interests, setInterests] = useState<string[]>(user?.interests ?? []);
@@ -34,9 +36,11 @@ export function EditProfile() {
     try {
       await update.mutateAsync({
         displayName,
+        username: username.toLowerCase(),
         headline,
         bio,
         location,
+        link,
         pronouns,
         gender,
         interests,
@@ -44,8 +48,8 @@ export function EditProfile() {
       });
       show('保存しました');
       navigate('/app/profile');
-    } catch {
-      show('保存に失敗しました');
+    } catch (e) {
+      show(e instanceof Error && e.message === 'username_taken' ? 'そのユーザー名は使われています' : '保存に失敗しました');
     }
   }
 
@@ -75,6 +79,20 @@ export function EditProfile() {
           <input className="input" value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={40} />
         </div>
         <div className="field">
+          <label>ユーザー名</label>
+          <div className="username-field">
+            <span>@</span>
+            <input
+              className="input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              placeholder="username"
+              maxLength={20}
+            />
+          </div>
+          <span className="field-hint">半角英数字とアンダースコアのみ。</span>
+        </div>
+        <div className="field">
           <label>ひとこと</label>
           <input
             className="input"
@@ -91,6 +109,16 @@ export function EditProfile() {
         <div className="field">
           <label>エリア</label>
           <input className="input" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={80} />
+        </div>
+        <div className="field">
+          <label>リンク</label>
+          <input
+            className="input"
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+            placeholder="例: instagram.com/yourname"
+            maxLength={120}
+          />
         </div>
         <div className="field">
           <label>代名詞（任意）</label>

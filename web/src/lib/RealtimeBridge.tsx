@@ -1,43 +1,43 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import type { ChatMessage, MatchSummary } from '../api/types';
+import { useLocation } from 'react-router-dom';
+import type { ChatMessage } from '../api/types';
 import { useToast } from '../components/Toast';
 import { getSocket } from './socket';
 
 /**
- * App-wide realtime listener. Mounted once while authenticated; keeps query
- * caches fresh and surfaces new-match / new-message toasts. Per-conversation
- * concerns (typing, read receipts) are handled inside the Chat screen.
+ * App-wide realtime listener (mounted once while authenticated). Keeps caches
+ * fresh and surfaces light notifications. The Chat screen handles typing/read.
  */
 export function RealtimeBridge() {
   const qc = useQueryClient();
   const show = useToast((s) => s.show);
+  const location = useLocation();
 
   useEffect(() => {
     const socket = getSocket();
 
-    const onMatch = ({ match }: { match: MatchSummary }) => {
-      qc.invalidateQueries({ queryKey: ['matches'] });
-      qc.invalidateQueries({ queryKey: ['likes'] });
-      show(`${match.user.displayName} とマッチしました！`);
-    };
-
     const onMessage = ({ message }: { message: ChatMessage }) => {
-      qc.setQueryData<{ messages: ChatMessage[] }>(['messages', message.matchId], (prev) => {
+      qc.setQueryData<{ messages: ChatMessage[] }>(['messages', message.conversationId], (prev) => {
         if (!prev) return prev;
         if (prev.messages.some((m) => m.id === message.id)) return prev;
         return { messages: [...prev.messages, message] };
       });
-      qc.invalidateQueries({ queryKey: ['matches'] });
+      qc.invalidateQueries({ queryKey: ['conversations'] });
+      // Only toast if the user isn't already looking at that thread.
+      if (!location.pathname.includes(message.conversationId)) {
+        show('新しいメッセージが届きました 💬');
+      }
     };
+    const onFollow = () => qc.invalidateQueries({ queryKey: ['profile'] });
 
-    socket.on('match', onMatch);
     socket.on('message', onMessage);
+    socket.on('follow', onFollow);
     return () => {
-      socket.off('match', onMatch);
       socket.off('message', onMessage);
+      socket.off('follow', onFollow);
     };
-  }, [qc, show]);
+  }, [qc, show, location.pathname]);
 
   return null;
 }

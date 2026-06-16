@@ -1,100 +1,214 @@
-import { useNavigate } from 'react-router-dom';
-import { IconCheck, IconLogout, IconPin, IconSettings } from '../components/icons';
-import { closeSocket } from '../lib/socket';
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useBlock, useFollow, useOpenConversation, useProfile, useUserPosts } from '../api/hooks';
+import { Avatar } from '../components/Avatar';
+import { ReportSheet } from '../components/ReportSheet';
+import { Sheet } from '../components/Sheet';
+import { useToast } from '../components/Toast';
+import {
+  IconChevronLeft,
+  IconGrid,
+  IconLink,
+  IconMore,
+  IconPin,
+  IconSettings,
+} from '../components/icons';
 import { useAuth } from '../store/auth';
 
 export function Profile() {
-  const user = useAuth((s) => s.user);
-  const logout = useAuth((s) => s.logout);
+  const { username } = useParams();
+  const me = useAuth((s) => s.user);
   const navigate = useNavigate();
+  const show = useToast((s) => s.show);
 
-  if (!user) return null;
+  const key = username ?? me?.username;
+  const { data, isLoading } = useProfile(key);
+  const user = data?.user;
+  const isOwn = !!user && user.id === me?.id;
+  const posts = useUserPosts(user?.id);
 
-  function doLogout() {
-    closeSocket();
-    logout();
-    navigate('/', { replace: true });
+  const follow = useFollow();
+  const openConv = useOpenConversation();
+  const block = useBlock();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+
+  function toggleFollow() {
+    if (!user) return;
+    follow.mutate({ userId: user.id, following: user.isFollowing });
+  }
+  function message() {
+    if (!user) return;
+    openConv.mutate(user.id, {
+      onSuccess: ({ conversation }) => navigate(`/app/dm/${conversation.id}`),
+    });
+  }
+
+  if (isLoading || !user) {
+    return (
+      <div className="screen-inner">
+        <div className="center-col">
+          <div className="spinner" />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="screen-inner">
+    <div className="screen-inner flush">
       <header className="topbar">
-        <span className="page-title">プロフィール</span>
-        <div className="topbar-actions">
-          <button
-            className="icon-btn"
-            onClick={() => navigate('/app/settings')}
-            aria-label="設定"
-          >
-            <IconSettings width={20} height={20} />
+        {username && !isOwn ? (
+          <button className="icon-btn" onClick={() => navigate(-1)} aria-label="戻る">
+            <IconChevronLeft />
           </button>
-        </div>
+        ) : (
+          <span style={{ width: 40 }} />
+        )}
+        <span className="profile-handle">
+          {user.username}
+          {user.verified && <span className="mini-verified">✓</span>}
+        </span>
+        {isOwn ? (
+          <button className="icon-btn" onClick={() => navigate('/app/settings')} aria-label="設定">
+            <IconSettings width={22} height={22} />
+          </button>
+        ) : (
+          <button className="icon-btn" onClick={() => setMenuOpen(true)} aria-label="メニュー">
+            <IconMore width={22} height={22} />
+          </button>
+        )}
       </header>
 
-      <div className="profile-hero">
-        <div
-          className="profile-cover"
-          style={{ backgroundImage: user.photos[0] ? `url(${user.photos[0]})` : undefined }}
-        >
-          <div className="profile-cover-shade" />
-        </div>
-        <div className="profile-identity">
-          <h1>
-            {user.displayName}
-            {user.age != null && <span className="profile-age">{user.age}</span>}
-            {user.verified && (
-              <span className="verified-badge" style={{ width: 22, height: 22 }}>
-                <IconCheck width={13} height={13} />
-              </span>
-            )}
-          </h1>
-          {user.headline && <p className="profile-headline">{user.headline}</p>}
-          {user.location && (
-            <p className="profile-loc">
-              <IconPin width={14} height={14} /> {user.location}
-            </p>
-          )}
+      <div className="profile-top">
+        <Avatar src={user.photos[0]} name={user.displayName} size={86} ring />
+        <div className="profile-stats">
+          <div className="stat">
+            <strong>{user.postsCount}</strong>
+            <span>投稿</span>
+          </div>
+          <div className="stat">
+            <strong>{user.followersCount}</strong>
+            <span>フォロワー</span>
+          </div>
+          <div className="stat">
+            <strong>{user.followingCount}</strong>
+            <span>フォロー中</span>
+          </div>
         </div>
       </div>
 
-      <button className="btn btn-primary btn-block" onClick={() => navigate('/app/edit')}>
-        プロフィールを編集
-      </button>
-
-      {user.bio && (
-        <section className="profile-section">
-          <h4 className="section-label">自己紹介</h4>
-          <p className="profile-bio">{user.bio}</p>
-        </section>
-      )}
-
-      {user.interests.length > 0 && (
-        <section className="profile-section">
-          <h4 className="section-label">趣味・関心</h4>
-          <div className="chip-row">
+      <div className="profile-meta">
+        <div className="profile-displayname">
+          {user.displayName}
+          {user.age != null && <span className="profile-age-inline">{user.age}</span>}
+          {user.pronouns && <span className="profile-pronouns">{user.pronouns}</span>}
+        </div>
+        {user.headline && <div className="profile-headline-text">{user.headline}</div>}
+        {user.bio && <p className="profile-bio-text">{user.bio}</p>}
+        <div className="profile-extra">
+          {user.location && (
+            <span>
+              <IconPin width={13} height={13} /> {user.location}
+            </span>
+          )}
+          {user.link && (
+            <a
+              href={user.link.startsWith('http') ? user.link : `https://${user.link}`}
+              target="_blank"
+              rel="noreferrer"
+              className="profile-link"
+            >
+              <IconLink width={13} height={13} /> {user.link}
+            </a>
+          )}
+        </div>
+        {user.interests.length > 0 && (
+          <div className="chip-row" style={{ marginTop: 12 }}>
             {user.interests.map((t) => (
-              <span key={t} className="chip selected">
+              <span key={t} className="chip selected sm">
                 {t}
               </span>
             ))}
           </div>
-        </section>
+        )}
+        {!isOwn && user.followsYou && <div className="follows-you-line">あなたをフォローしています</div>}
+      </div>
+
+      <div className="profile-buttons">
+        {isOwn ? (
+          <>
+            <button className="btn btn-subtle btn-block" onClick={() => navigate('/app/edit')}>
+              プロフィールを編集
+            </button>
+            <button className="btn btn-subtle" onClick={() => navigate('/app/create')}>
+              投稿
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              className={`btn btn-block ${user.isFollowing ? 'btn-subtle' : 'btn-primary'}`}
+              onClick={toggleFollow}
+              disabled={follow.isPending}
+            >
+              {user.isFollowing ? 'フォロー中' : user.followsYou ? 'フォローバック' : 'フォロー'}
+            </button>
+            <button className="btn btn-subtle btn-block" onClick={message} disabled={openConv.isPending}>
+              メッセージ
+            </button>
+          </>
+        )}
+      </div>
+
+      <div className="profile-grid-head">
+        <IconGrid width={20} height={20} />
+      </div>
+      {posts.data && posts.data.posts.length > 0 ? (
+        <div className="explore-grid tight">
+          {posts.data.posts.map((p) => (
+            <button key={p.id} className="explore-cell" onClick={() => navigate(`/app/post/${p.id}`)}>
+              <img src={p.imageUrl} alt={p.caption} />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="empty-line muted" style={{ textAlign: 'center' }}>
+          まだ投稿はありません。
+        </p>
       )}
 
-      {user.photos.length > 1 && (
-        <section className="profile-section">
-          <h4 className="section-label">写真</h4>
-          <div className="profile-photos">
-            {user.photos.map((p, i) => (
-              <img key={i} src={p} alt="" />
-            ))}
-          </div>
-        </section>
-      )}
+      <Sheet open={menuOpen} onClose={() => setMenuOpen(false)} title={user.displayName}>
+        <button
+          className="sheet-action"
+          onClick={() => {
+            setMenuOpen(false);
+            setReportOpen(true);
+          }}
+        >
+          通報する
+        </button>
+        <button
+          className="sheet-action danger"
+          onClick={() => {
+            setMenuOpen(false);
+            block.mutate(user.id, {
+              onSuccess: () => {
+                show(`${user.displayName}さんをブロックしました`);
+                navigate(-1);
+              },
+            });
+          }}
+        >
+          ブロックする
+        </button>
+      </Sheet>
 
-      <button className="btn btn-ghost btn-block profile-logout" onClick={doLogout}>
-        <IconLogout width={18} height={18} /> ログアウト
-      </button>
+      <ReportSheet
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        userId={user.id}
+        userName={user.displayName}
+      />
     </div>
   );
 }

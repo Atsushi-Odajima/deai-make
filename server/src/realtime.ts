@@ -27,9 +27,12 @@ export function initRealtime(server: HttpServer): Server {
     socket.join(`user:${userId}`);
     touchActivity(userId);
 
-    socket.on('typing', (payload: { matchId: string; to: string }) => {
+    socket.on('typing', (payload: { conversationId: string; to: string }) => {
       if (payload?.to) {
-        io?.to(`user:${payload.to}`).emit('typing', { matchId: payload.matchId, from: userId });
+        io?.to(`user:${payload.to}`).emit('typing', {
+          conversationId: payload.conversationId,
+          from: userId,
+        });
       }
     });
 

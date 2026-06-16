@@ -6,10 +6,10 @@ import { avatarSvg } from './avatar.js';
 import { initRealtime } from './realtime.js';
 import { authRouter } from './routes/auth.js';
 import { usersRouter } from './routes/users.js';
-import { discoveryRouter } from './routes/discovery.js';
-import { swipesRouter } from './routes/swipes.js';
-import { matchesRouter } from './routes/matches.js';
+import { postsRouter } from './routes/posts.js';
+import { conversationsRouter } from './routes/conversations.js';
 import { messagesRouter } from './routes/messages.js';
+import { boardRouter } from './routes/board.js';
 import { safetyRouter } from './routes/safety.js';
 
 const app = express();
@@ -28,10 +28,10 @@ app.get('/api/avatar/:seed.svg', (req, res) => {
 
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
-app.use('/api/discovery', discoveryRouter);
-app.use('/api/swipes', swipesRouter);
-app.use('/api/matches', matchesRouter);
+app.use('/api/posts', postsRouter);
+app.use('/api/conversations', conversationsRouter);
 app.use('/api/messages', messagesRouter);
+app.use('/api/board', boardRouter);
 app.use('/api/safety', safetyRouter);
 
 app.use((_req, res) => res.status(404).json({ error: 'not_found' }));

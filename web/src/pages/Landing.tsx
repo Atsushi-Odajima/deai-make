@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { IconCards, IconChat, IconSparkle } from '../components/icons';
+import { IconBoard, IconDM, IconSearch } from '../components/icons';
 
 export function Landing() {
   return (
@@ -20,7 +20,7 @@ export function Landing() {
           <p className="landing-tag">
             趣味でつながる、あたらしいSNS。
             <br />
-            スワイプして、気の合う人を見つけよう。
+            投稿をシェアして、気の合う人とつながろう。
           </p>
         </motion.div>
 
@@ -31,9 +31,9 @@ export function Landing() {
           variants={{ show: { transition: { staggerChildren: 0.12 } } }}
         >
           {[
-            { icon: IconCards, title: 'スワイプで発見', text: '同じ趣味の人をテンポよく' },
-            { icon: IconSparkle, title: '気が合えばマッチ', text: 'お互い「いいね」でつながる' },
-            { icon: IconChat, title: 'そのままトーク', text: 'リアルタイムでメッセージ' },
+            { icon: IconSearch, title: '検索でみつける', text: '名前や趣味で気になる人を探す' },
+            { icon: IconDM, title: '気軽にDM', text: 'マッチ不要、すぐにメッセージ' },
+            { icon: IconBoard, title: '掲示板でつながる', text: '募集・イベント・雑談まで' },
           ].map(({ icon: Icon, title, text }) => (
             <motion.div
               key={title}
