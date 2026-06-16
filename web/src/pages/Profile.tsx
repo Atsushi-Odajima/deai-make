@@ -170,6 +170,25 @@ export function Profile() {
         )}
       </div>
 
+      {(() => {
+        const rows: [string, string][] = [];
+        if (user.occupation) rows.push(['仕事', user.occupation]);
+        if (user.height > 0) rows.push(['身長', `${user.height} cm`]);
+        if (user.bodyType) rows.push(['体型', user.bodyType]);
+        if (user.weightNote) rows.push(['体重', user.weightNote]);
+        if (rows.length === 0) return null;
+        return (
+          <div className="detail-card">
+            {rows.map(([k, v]) => (
+              <div key={k} className="detail-row">
+                <span className="detail-key">{k}</span>
+                <span className="detail-val">{v}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
       <div className="profile-grid-head">
         {isOwn ? (
           <>

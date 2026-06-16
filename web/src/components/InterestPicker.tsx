@@ -1,10 +1,11 @@
 import { KeyboardEvent, useState } from 'react';
 import { useSuggestedInterests } from '../api/hooks';
+import { HOBBY_SUGGESTIONS } from '../lib/profileOptions';
 import { IconPlus, IconX } from './icons';
 
 const DEFAULTS = [
+  ...HOBBY_SUGGESTIONS,
   'Coffee', 'Photography', 'Hiking', 'Travel', 'Gaming', 'Cooking', 'Running', 'Music',
-  'Art', 'Reading', 'Cycling', 'Yoga', 'Movies', 'Coding', 'Plants', 'Board Games',
 ];
 
 interface Props {
@@ -17,9 +18,9 @@ export function InterestPicker({ value, onChange, max = 12 }: Props) {
   const { data } = useSuggestedInterests();
   const [draft, setDraft] = useState('');
 
-  const suggestions = [...new Set([...(data?.interests ?? []), ...DEFAULTS])]
+  const suggestions = [...new Set([...DEFAULTS, ...(data?.interests ?? [])])]
     .filter((s) => !value.includes(s))
-    .slice(0, 18);
+    .slice(0, 20);
 
   function toggle(name: string) {
     if (value.includes(name)) {

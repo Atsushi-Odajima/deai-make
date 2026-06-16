@@ -190,6 +190,21 @@ function run() {
     });
   });
 
+  // Rich matchmaking-style profile details (shown on profiles).
+  const details: Record<string, { occ: string; body: string; weight: string; height: number }> = {
+    you: { occ: 'IT', body: '普通', weight: '60kg前後', height: 172 },
+    mio: { occ: 'クリエイティブ', body: '細い', weight: '', height: 160 },
+    ren: { occ: '営業職', body: '普通', weight: '筋トレ中', height: 178 },
+    kai: { occ: '外資系', body: '普通', weight: '', height: 180 },
+    jun: { occ: 'サービス業', body: 'お腹だけ酒ぽちゃ', weight: 'お酒は控えめに…', height: 175 },
+    aoi: { occ: '医療・福祉', body: 'ガリガリ', weight: '', height: 158 },
+  };
+  for (const [k, d] of Object.entries(details)) {
+    db.prepare(
+      'UPDATE users SET occupation = ?, body_type = ?, weight_note = ?, height = ? WHERE id = ?',
+    ).run(d.occ, d.body, d.weight, d.height, ids[k]);
+  }
+
   const keys = PEOPLE.map((p) => p.key);
 
   // Follow graph: everyone follows a few others; "you" follows several.
@@ -326,6 +341,8 @@ function run() {
       'INSERT OR IGNORE INTO footprints (target_id, visitor_id, created_at) VALUES (?, ?, ?)',
     ).run(ids['you'], ids[k], new Date(now.getTime() - i * 17 * 60 * 1000).toISOString());
   });
+  // A couple of footprint notifications for the demo.
+  ['kai', 'haru'].forEach((k) => createNotification(ids['you'], ids[k], 'footprint', ids[k]));
 
   // Notifications addressed to "you".
   createNotification(ids['you'], ids['mio'], 'follow', ids['mio']);

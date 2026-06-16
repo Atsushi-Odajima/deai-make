@@ -11,6 +11,10 @@ export interface PublicUser {
   headline: string;
   location: string;
   link: string;
+  occupation: string;
+  bodyType: string;
+  weightNote: string;
+  height: number;
   gender: Gender;
   pronouns: string;
   photos: string[];
@@ -58,7 +62,8 @@ export type NotificationType =
   | 'like'
   | 'comment'
   | 'board_comment'
-  | 'story_reaction';
+  | 'story_reaction'
+  | 'footprint';
 
 export interface AppNotification {
   id: string;

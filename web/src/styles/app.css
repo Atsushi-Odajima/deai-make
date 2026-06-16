@@ -2471,3 +2471,34 @@
   padding: 10px 14px;
   border-bottom: 1px solid var(--line);
 }
+
+/* ---- Profile detail card (occupation / height / body type / weight) ----- */
+.detail-card {
+  margin: 14px 18px 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.detail-row:last-child {
+  border-bottom: none;
+}
+.detail-key {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.detail-val {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: right;
+}

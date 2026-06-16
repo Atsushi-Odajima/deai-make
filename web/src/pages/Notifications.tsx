@@ -12,10 +12,12 @@ const TEXT: Record<AppNotification['type'], string> = {
   comment: 'あなたの投稿にコメントしました',
   board_comment: 'あなたのスレッドにコメントしました',
   story_reaction: 'あなたのストーリーズにリアクションしました',
+  footprint: 'あなたのプロフィールを訪れました',
 };
 
 const FILTERS: { key: string; label: string; match: (t: AppNotification['type']) => boolean }[] = [
   { key: 'all', label: 'すべて', match: () => true },
+  { key: 'footprint', label: 'あしあと', match: (t) => t === 'footprint' },
   { key: 'follow', label: 'フォロー', match: (t) => t === 'follow' },
   { key: 'like', label: 'いいね', match: (t) => t === 'like' },
   { key: 'comment', label: 'コメント', match: (t) => t === 'comment' || t === 'board_comment' },
@@ -31,7 +33,8 @@ export function Notifications() {
   const items = (data?.notifications ?? []).filter((n) => active.match(n.type));
 
   function open(n: AppNotification) {
-    if (n.type === 'follow' || n.type === 'story_reaction') navigate(`/app/u/${n.actor.username}`);
+    if (n.type === 'follow' || n.type === 'story_reaction' || n.type === 'footprint')
+      navigate(`/app/u/${n.actor.username}`);
     else if (n.type === 'board_comment') navigate(`/app/board/${n.entityId}`);
     else navigate(`/app/post/${n.entityId}`);
   }

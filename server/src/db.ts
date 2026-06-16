@@ -24,6 +24,10 @@ CREATE TABLE IF NOT EXISTS users (
   bio           TEXT NOT NULL DEFAULT '',
   location      TEXT NOT NULL DEFAULT '',
   link          TEXT NOT NULL DEFAULT '',
+  occupation    TEXT NOT NULL DEFAULT '',
+  body_type     TEXT NOT NULL DEFAULT '',
+  weight_note   TEXT NOT NULL DEFAULT '',
+  height        INTEGER NOT NULL DEFAULT 0,
   show_age      INTEGER NOT NULL DEFAULT 1,
   discovery_enabled INTEGER NOT NULL DEFAULT 1,
   verified      INTEGER NOT NULL DEFAULT 0,
@@ -198,6 +202,18 @@ CREATE TABLE IF NOT EXISTS footprints (
 CREATE INDEX IF NOT EXISTS idx_footprints_target ON footprints(target_id, created_at);
 `);
 
+// Lightweight migrations: add newer columns to pre-existing databases.
+function ensureColumn(table: string, column: string, decl: string): void {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  if (!cols.some((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${decl}`);
+  }
+}
+ensureColumn('users', 'occupation', "TEXT NOT NULL DEFAULT ''");
+ensureColumn('users', 'body_type', "TEXT NOT NULL DEFAULT ''");
+ensureColumn('users', 'weight_note', "TEXT NOT NULL DEFAULT ''");
+ensureColumn('users', 'height', 'INTEGER NOT NULL DEFAULT 0');
+
 export interface UserRow {
   id: string;
   email: string;
@@ -211,6 +227,10 @@ export interface UserRow {
   bio: string;
   location: string;
   link: string;
+  occupation: string;
+  body_type: string;
+  weight_note: string;
+  height: number;
   show_age: number;
   discovery_enabled: number;
   verified: number;
@@ -274,6 +294,10 @@ export function toPublicUser(row: UserRow, viewerId?: string): PublicUser {
     headline: row.headline,
     location: row.location,
     link: row.link,
+    occupation: row.occupation,
+    bodyType: row.body_type,
+    weightNote: row.weight_note,
+    height: row.height,
     gender: row.gender as Gender,
     pronouns: row.pronouns,
     photos: getPhotos(row.id),
@@ -362,13 +386,20 @@ export function setPhotos(userId: string, urls: string[]): void {
   tx(clean);
 }
 
-/** Record (or refresh) a profile visit — a "footprint" left by `visitorId`. */
-export function recordFootprint(targetId: string, visitorId: string): void {
-  if (targetId === visitorId || isBlockedBetween(targetId, visitorId)) return;
+/**
+ * Record (or refresh) a profile visit — a "footprint" left by `visitorId`.
+ * Returns true when this is a brand-new visitor (used to notify only once).
+ */
+export function recordFootprint(targetId: string, visitorId: string): boolean {
+  if (targetId === visitorId || isBlockedBetween(targetId, visitorId)) return false;
+  const existed = db
+    .prepare('SELECT 1 FROM footprints WHERE target_id = ? AND visitor_id = ?')
+    .get(targetId, visitorId);
   db.prepare(
     `INSERT INTO footprints (target_id, visitor_id, created_at) VALUES (?, ?, ?)
      ON CONFLICT(target_id, visitor_id) DO UPDATE SET created_at = excluded.created_at`,
   ).run(targetId, visitorId, new Date().toISOString());
+  return !existed;
 }
 
 export function getPostImages(postId: string): string[] {
@@ -388,7 +419,7 @@ export function setPostImages(postId: string, urls: string[]): void {
 export function createNotification(
   userId: string,
   actorId: string,
-  type: 'follow' | 'like' | 'comment' | 'board_comment' | 'story_reaction',
+  type: 'follow' | 'like' | 'comment' | 'board_comment' | 'story_reaction' | 'footprint',
   entityId = '',
 ): void {
   if (userId === actorId || isBlockedBetween(userId, actorId)) return;

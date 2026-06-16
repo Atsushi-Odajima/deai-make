@@ -16,7 +16,7 @@
 
 | Method | Path | 認証 | 説明 |
 | --- | --- | --- | --- |
-| PATCH | `/users/me` | ✓ | プロフィール更新（`displayName, username, headline, bio, location, link, pronouns, gender, showAge, discoveryEnabled, photos[], interests[]`）。 |
+| PATCH | `/users/me` | ✓ | プロフィール更新（`displayName, username, headline, bio, location, link, occupation, bodyType, weightNote, height, pronouns, gender, showAge, discoveryEnabled, photos[], interests[]`）。 |
 | GET | `/users/search?q=` | ✓ | 名前 / @ユーザー名 / 趣味で検索。 |
 | GET | `/users/me/footprints` | ✓ | あしあと：直近の訪問者（最大20人）。 |
 | GET | `/users/suggested` | ✓ | おすすめユーザー（フォロワー数順）。 |
@@ -65,7 +65,7 @@
 
 | Method | Path | 認証 | 説明 |
 | --- | --- | --- | --- |
-| GET | `/notifications` | ✓ | 通知一覧（取得時に既読化）。type: `follow/like/comment/board_comment/story_reaction`。種類別フィルタはクライアント側。 |
+| GET | `/notifications` | ✓ | 通知一覧（取得時に既読化）。type: `follow/like/comment/board_comment/story_reaction/footprint`（足あとは初回訪問時のみ通知）。種類別フィルタはクライアント側。 |
 | GET | `/notifications/unread-count` | ✓ | 未読件数（ヘッダーのバッジ用）。 |
 
 ## ストーリーズ `/stories`

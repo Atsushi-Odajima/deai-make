@@ -5,6 +5,7 @@ import { InterestPicker } from '../components/InterestPicker';
 import { PhotoEditor } from '../components/PhotoEditor';
 import { useToast } from '../components/Toast';
 import { IconChevronLeft } from '../components/icons';
+import { BODY_TYPES, HEIGHTS, OCCUPATIONS } from '../lib/profileOptions';
 import { useAuth } from '../store/auth';
 
 const GENDERS = [
@@ -29,6 +30,10 @@ export function EditProfile() {
   const [link, setLink] = useState(user?.link ?? '');
   const [pronouns, setPronouns] = useState(user?.pronouns ?? '');
   const [gender, setGender] = useState(user?.gender ?? 'unspecified');
+  const [occupation, setOccupation] = useState(user?.occupation ?? '');
+  const [bodyType, setBodyType] = useState(user?.bodyType ?? '');
+  const [weightNote, setWeightNote] = useState(user?.weightNote ?? '');
+  const [height, setHeight] = useState(user?.height ?? 0);
   const [interests, setInterests] = useState<string[]>(user?.interests ?? []);
   const [photos, setPhotos] = useState<string[]>(user?.photos ?? []);
 
@@ -43,6 +48,10 @@ export function EditProfile() {
         link,
         pronouns,
         gender,
+        occupation,
+        bodyType,
+        weightNote,
+        height,
         interests,
         photos,
       });
@@ -139,6 +148,57 @@ export function EditProfile() {
               </option>
             ))}
           </select>
+        </div>
+
+        <h4 className="section-label" style={{ marginTop: 8 }}>
+          詳細プロフィール
+        </h4>
+        <div className="field">
+          <label>仕事</label>
+          <select className="select" value={occupation} onChange={(e) => setOccupation(e.target.value)}>
+            <option value="">未選択</option>
+            {OCCUPATIONS.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label>身長</label>
+          <select
+            className="select"
+            value={height}
+            onChange={(e) => setHeight(Number(e.target.value))}
+          >
+            <option value={0}>未選択</option>
+            {HEIGHTS.map((h) => (
+              <option key={h} value={h}>
+                {h} cm
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label>体型</label>
+          <select className="select" value={bodyType} onChange={(e) => setBodyType(e.target.value)}>
+            <option value="">未選択</option>
+            {BODY_TYPES.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label>体重（自由入力）</label>
+          <input
+            className="input"
+            value={weightNote}
+            onChange={(e) => setWeightNote(e.target.value)}
+            placeholder="例: 60kg前後 / 増量中 など"
+            maxLength={40}
+          />
         </div>
 
         <h4 className="section-label" style={{ marginTop: 8 }}>

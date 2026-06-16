@@ -30,6 +30,10 @@ const updateSchema = z.object({
   bio: z.string().max(500).optional(),
   location: z.string().max(80).optional(),
   link: z.string().max(120).optional(),
+  occupation: z.string().max(40).optional(),
+  bodyType: z.string().max(40).optional(),
+  weightNote: z.string().max(40).optional(),
+  height: z.number().int().min(0).max(260).optional(),
   pronouns: z.string().max(40).optional(),
   gender: z.enum(['female', 'male', 'nonbinary', 'other', 'unspecified']).optional(),
   showAge: z.boolean().optional(),
@@ -45,6 +49,10 @@ const FIELD_MAP: Record<string, string> = {
   bio: 'bio',
   location: 'location',
   link: 'link',
+  occupation: 'occupation',
+  bodyType: 'body_type',
+  weightNote: 'weight_note',
+  height: 'height',
   pronouns: 'pronouns',
   gender: 'gender',
   showAge: 'show_age',
@@ -168,7 +176,11 @@ usersRouter.get('/:idOrUsername', (req: AuthedRequest, res) => {
     res.status(404).json({ error: 'not_found' });
     return;
   }
-  recordFootprint(target.id, me);
+  // Leaving a footprint notifies the owner the first time you visit.
+  if (recordFootprint(target.id, me)) {
+    createNotification(target.id, me, 'footprint', me);
+    emitToUser(target.id, 'notification', {});
+  }
   res.json({ user: toPublicUser(target, me) });
 });
 
