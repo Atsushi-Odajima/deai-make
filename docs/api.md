@@ -35,6 +35,8 @@
 | GET | `/posts/:id` | ✓ | 単一投稿。 |
 | DELETE | `/posts/:id` | ✓ | 自分の投稿を削除。 |
 | POST/DELETE | `/posts/:id/like` | ✓ | いいね / 取り消し。 |
+| POST/DELETE | `/posts/:id/bookmark` | ✓ | 保存 / 解除。`Post.savedByMe` に反映。 |
+| GET | `/posts/saved` | ✓ | 保存済み投稿一覧。 |
 | GET/POST | `/posts/:id/comments` | ✓ | コメント取得 / 追加。 |
 
 ## DM `/conversations` `/messages`
@@ -61,7 +63,7 @@
 
 | Method | Path | 認証 | 説明 |
 | --- | --- | --- | --- |
-| GET | `/notifications` | ✓ | 通知一覧（取得時に既読化）。type: `follow/like/comment/board_comment`。 |
+| GET | `/notifications` | ✓ | 通知一覧（取得時に既読化）。type: `follow/like/comment/board_comment/story_reaction`。種類別フィルタはクライアント側。 |
 | GET | `/notifications/unread-count` | ✓ | 未読件数（ヘッダーのバッジ用）。 |
 
 ## ストーリーズ `/stories`
@@ -71,6 +73,8 @@
 | POST | `/stories` | ✓ | ストーリー投稿（24時間で失効）。`{ imageUrl, caption? }`。 |
 | GET | `/stories/feed` | ✓ | ストーリートレイ（自分＋フォロー中、未読リング優先）。`StoryGroup[]`。 |
 | POST | `/stories/:id/view` | ✓ | 閲覧済みにする。 |
+| POST/DELETE | `/stories/:id/react` | ✓ | リアクション（`like/akan/bad/helpful`）を付与 / 解除。 |
+| GET | `/stories/:id/viewers` | ✓ | 閲覧者一覧（投稿者のみ）。各閲覧者のリアクション付き。 |
 | DELETE | `/stories/:id` | ✓ | 自分のストーリーを削除。 |
 
 ## 安全 `/safety`
