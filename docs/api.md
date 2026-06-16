@@ -28,7 +28,7 @@
 
 | Method | Path | 認証 | 説明 |
 | --- | --- | --- | --- |
-| POST | `/posts` | ✓ | 投稿作成。`{ imageUrl, caption? }`。 |
+| POST | `/posts` | ✓ | 投稿作成。`{ imageUrls: string[] (最大10) , caption? }`（`imageUrl` 単体も可）。`Post.images` に全画像、`imageUrl` は表紙。 |
 | GET | `/posts/feed` | ✓ | ホームフィード（フォロー中＋自分、空ならグローバル）。 |
 | GET | `/posts/explore` | ✓ | 新着投稿グリッド。 |
 | GET | `/posts/user/:userId` | ✓ | あるユーザーの投稿一覧。 |
@@ -57,6 +57,22 @@
 | DELETE | `/board/:id` | ✓ | 自分のスレッドを削除。 |
 | GET/POST | `/board/:id/comments` | ✓ | コメント取得 / 追加。 |
 
+## 通知 `/notifications`
+
+| Method | Path | 認証 | 説明 |
+| --- | --- | --- | --- |
+| GET | `/notifications` | ✓ | 通知一覧（取得時に既読化）。type: `follow/like/comment/board_comment`。 |
+| GET | `/notifications/unread-count` | ✓ | 未読件数（ヘッダーのバッジ用）。 |
+
+## ストーリーズ `/stories`
+
+| Method | Path | 認証 | 説明 |
+| --- | --- | --- | --- |
+| POST | `/stories` | ✓ | ストーリー投稿（24時間で失効）。`{ imageUrl, caption? }`。 |
+| GET | `/stories/feed` | ✓ | ストーリートレイ（自分＋フォロー中、未読リング優先）。`StoryGroup[]`。 |
+| POST | `/stories/:id/view` | ✓ | 閲覧済みにする。 |
+| DELETE | `/stories/:id` | ✓ | 自分のストーリーを削除。 |
+
 ## 安全 `/safety`
 
 | Method | Path | 認証 | 説明 |
@@ -81,6 +97,6 @@
 | `read` | server→client | `{ conversationId, readerId, readAt }` 既読。 |
 | `typing` | 双方向 | `{ conversationId, to }` / `{ conversationId, from }` 入力中。 |
 | `follow` | server→client | `{ from }` フォローされた。 |
-| `post_like` / `post_comment` / `board_comment` | server→client | 投稿・掲示板への反応通知。 |
+| `notification` | server→client | 新しい通知あり（フォロー/いいね/コメント）。バッジ更新の合図。 |
 
 型の定義は `web/src/api/types.ts` / `server/src/types.ts` を参照。
