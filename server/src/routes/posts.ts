@@ -112,6 +112,25 @@ postsRouter.get('/explore', (req: AuthedRequest, res) => {
   res.json({ posts: rows.map((r) => mapPost(r, me)) });
 });
 
+// Search posts by caption (supports #hashtag style queries).
+postsRouter.get('/search', (req: AuthedRequest, res) => {
+  const me = req.userId!;
+  const q = String(req.query.q ?? '').trim().replace(/^#/, '');
+  if (!q) {
+    res.json({ posts: [] });
+    return;
+  }
+  const rows = db
+    .prepare(
+      `SELECT p.* FROM posts p
+       WHERE p.caption LIKE @like
+         AND NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.blocker_id=@me AND b.blocked_id=p.user_id) OR (b.blocker_id=p.user_id AND b.blocked_id=@me))
+       ORDER BY p.created_at DESC LIMIT 40`,
+    )
+    .all({ me, like: `%${q}%` }) as PostRow[];
+  res.json({ posts: rows.map((r) => mapPost(r, me)) });
+});
+
 // Posts the current user has bookmarked (newest saved first).
 postsRouter.get('/saved', (req: AuthedRequest, res) => {
   const me = req.userId!;

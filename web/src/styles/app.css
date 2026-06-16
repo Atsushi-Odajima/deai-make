@@ -2289,3 +2289,185 @@
   font-weight: 700;
   color: var(--ink-2);
 }
+
+/* =========================================================================
+   Story editor, archive, footprints, settings link rows, search tabs
+   ========================================================================= */
+
+/* ---- Story creation editor --------------------------------------------- */
+.story-editor {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: #05070d;
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.story-editor-media {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.story-editor-top {
+  position: absolute;
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 5;
+}
+.icon-btn.ghost.light {
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  box-shadow: none;
+}
+.story-editor-text {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 130px;
+  z-index: 4;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.4;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+}
+.story-editor-text::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+}
+.story-editor-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 14px calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 5;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.emoji-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.emoji-bar::-webkit-scrollbar {
+  display: none;
+}
+.emoji-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(6px);
+  font-size: 24px;
+  display: grid;
+  place-items: center;
+}
+.emoji-btn:active {
+  transform: scale(0.88);
+}
+.story-share {
+  align-self: flex-end;
+  height: 46px;
+  padding: 0 28px;
+}
+.story-editor-pick {
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+/* ---- Archive ------------------------------------------------------------ */
+.archive-note {
+  font-size: 13px;
+  padding: 14px 16px 6px;
+  line-height: 1.6;
+}
+.archive-cell {
+  border-radius: 4px;
+}
+.archive-expired {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(8, 12, 24, 0.66);
+  padding: 3px 7px;
+  border-radius: 6px;
+  z-index: 2;
+}
+.archive-cap {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 14px 6px 5px;
+  font-size: 11px;
+  color: #fff;
+  background: linear-gradient(to top, rgba(8, 12, 24, 0.8), transparent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+/* ---- Footprints --------------------------------------------------------- */
+.footprint-row {
+  justify-content: space-between;
+  gap: 10px;
+}
+.footprint-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.footprint-follow {
+  height: 36px;
+  padding: 0 18px;
+  font-size: 14px;
+  flex: none;
+}
+.footprint-cta {
+  white-space: nowrap;
+}
+
+/* ---- Settings link rows ------------------------------------------------- */
+.link-row {
+  width: 100%;
+  background: transparent;
+  text-align: left;
+}
+.link-row:active {
+  background: var(--surface);
+}
+
+/* ---- Search tabs -------------------------------------------------------- */
+.search-tabs {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}

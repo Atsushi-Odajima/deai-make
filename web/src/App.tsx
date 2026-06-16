@@ -20,6 +20,9 @@ import { Settings } from './pages/Settings';
 import { Conversations } from './pages/Conversations';
 import { Chat } from './pages/Chat';
 import { Notifications } from './pages/Notifications';
+import { CreateStory } from './pages/CreateStory';
+import { Archive } from './pages/Archive';
+import { Footprints } from './pages/Footprints';
 
 function FullScreenLoader() {
   return (
@@ -70,6 +73,9 @@ export function App() {
               <Route path="u/:username" element={<Profile />} />
             </Route>
             <Route path="/app/create" element={<CreatePost />} />
+            <Route path="/app/create-story" element={<CreateStory />} />
+            <Route path="/app/archive" element={<Archive />} />
+            <Route path="/app/footprints" element={<Footprints />} />
             <Route path="/app/board/new" element={<CreateBoardPost />} />
             <Route path="/app/board/:boardId" element={<BoardThread />} />
             <Route path="/app/post/:postId" element={<PostDetail />} />

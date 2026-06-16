@@ -18,6 +18,7 @@
 | --- | --- | --- | --- |
 | PATCH | `/users/me` | ✓ | プロフィール更新（`displayName, username, headline, bio, location, link, pronouns, gender, showAge, discoveryEnabled, photos[], interests[]`）。 |
 | GET | `/users/search?q=` | ✓ | 名前 / @ユーザー名 / 趣味で検索。 |
+| GET | `/users/me/footprints` | ✓ | あしあと：直近の訪問者（最大20人）。 |
 | GET | `/users/suggested` | ✓ | おすすめユーザー（フォロワー数順）。 |
 | GET | `/users/:idOrUsername` | ✓ | プロフィール（`PublicUser`、フォロー数・投稿数・isFollowing 等を含む）。 |
 | POST/DELETE | `/users/:id/follow` | ✓ | フォロー / 解除。 |
@@ -31,6 +32,7 @@
 | POST | `/posts` | ✓ | 投稿作成。`{ imageUrls: string[] (最大10) , caption? }`（`imageUrl` 単体も可）。`Post.images` に全画像、`imageUrl` は表紙。 |
 | GET | `/posts/feed` | ✓ | ホームフィード（フォロー中＋自分、空ならグローバル）。 |
 | GET | `/posts/explore` | ✓ | 新着投稿グリッド。 |
+| GET | `/posts/search?q=` | ✓ | キャプション / ハッシュタグで投稿検索。 |
 | GET | `/posts/user/:userId` | ✓ | あるユーザーの投稿一覧。 |
 | GET | `/posts/:id` | ✓ | 単一投稿。 |
 | DELETE | `/posts/:id` | ✓ | 自分の投稿を削除。 |
@@ -70,8 +72,9 @@
 
 | Method | Path | 認証 | 説明 |
 | --- | --- | --- | --- |
-| POST | `/stories` | ✓ | ストーリー投稿（24時間で失効）。`{ imageUrl, caption? }`。 |
+| POST | `/stories` | ✓ | ストーリー投稿（24時間で失効）。`{ imageUrl, caption? }`（テキスト/絵文字キャプション）。 |
 | GET | `/stories/feed` | ✓ | ストーリートレイ（自分＋フォロー中、未読リング優先）。`StoryGroup[]`。 |
+| GET | `/stories/archive` | ✓ | 自分の全ストーリー（期限切れ含む）。本人のみ。 |
 | POST | `/stories/:id/view` | ✓ | 閲覧済みにする。 |
 | POST/DELETE | `/stories/:id/react` | ✓ | リアクション（`like/akan/bad/helpful`）を付与 / 解除。 |
 | GET | `/stories/:id/viewers` | ✓ | 閲覧者一覧（投稿者のみ）。各閲覧者のリアクション付き。 |

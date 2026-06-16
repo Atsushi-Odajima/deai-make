@@ -13,15 +13,16 @@ const DURATION = 5000;
 interface Props {
   groups: StoryGroup[];
   startIndex: number;
+  startItemIndex?: number;
   onClose: () => void;
 }
 
-export function StoryViewer({ groups, startIndex, onClose }: Props) {
+export function StoryViewer({ groups, startIndex, startItemIndex = 0, onClose }: Props) {
   const navigate = useNavigate();
   const view = useViewStory();
   const react = useReactStory();
   const [gi, setGi] = useState(startIndex);
-  const [ii, setIi] = useState(0);
+  const [ii, setIi] = useState(startItemIndex);
   const [progress, setProgress] = useState(0);
   const [paused, setPaused] = useState(false);
   const [showViewers, setShowViewers] = useState(false);

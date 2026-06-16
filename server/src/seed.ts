@@ -304,6 +304,13 @@ function run() {
     });
   }
 
+  // Give your first story a text/emoji caption.
+  if (youStoryIds[0]) {
+    db.prepare('UPDATE stories SET caption = ? WHERE id = ?').run(
+      'はじめてのストーリーズ ✨😊', youStoryIds[0],
+    );
+  }
+
   // A few bookmarks for you.
   for (const k of ['mio', 'emi', 'kai']) {
     if (postIds[k]?.[0]) {
@@ -312,6 +319,13 @@ function run() {
       );
     }
   }
+
+  // Footprints on your profile (recent visitors for the あしあと screen).
+  ['mio', 'ren', 'aoi', 'sora', 'kai', 'nao', 'haru', 'emi'].forEach((k, i) => {
+    db.prepare(
+      'INSERT OR IGNORE INTO footprints (target_id, visitor_id, created_at) VALUES (?, ?, ?)',
+    ).run(ids['you'], ids[k], new Date(now.getTime() - i * 17 * 60 * 1000).toISOString());
+  });
 
   // Notifications addressed to "you".
   createNotification(ids['you'], ids['mio'], 'follow', ids['mio']);

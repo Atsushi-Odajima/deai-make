@@ -6,6 +6,7 @@ import {
   db,
   getUserRow,
   isBlockedBetween,
+  recordFootprint,
   setInterests,
   setPhotos,
   toMeUser,
@@ -144,7 +145,19 @@ usersRouter.get('/meta/interests', (_req, res) => {
   res.json({ interests: rows.map((r) => r.name) });
 });
 
-// Resolve a profile by id OR @username.
+// あしあと: the 20 most recent visitors to my profile (no timestamps shown).
+usersRouter.get('/me/footprints', (req: AuthedRequest, res) => {
+  const me = req.userId!;
+  const rows = db
+    .prepare(
+      `SELECT u.* FROM footprints f JOIN users u ON u.id = f.visitor_id
+       WHERE f.target_id = ? ORDER BY f.created_at DESC LIMIT 20`,
+    )
+    .all(me) as UserRow[];
+  res.json({ users: rows.filter((r) => !isBlockedBetween(me, r.id)).map((r) => toPublicUser(r, me)) });
+});
+
+// Resolve a profile by id OR @username. Viewing leaves a footprint.
 usersRouter.get('/:idOrUsername', (req: AuthedRequest, res) => {
   const me = req.userId!;
   const key = req.params.idOrUsername;
@@ -155,6 +168,7 @@ usersRouter.get('/:idOrUsername', (req: AuthedRequest, res) => {
     res.status(404).json({ error: 'not_found' });
     return;
   }
+  recordFootprint(target.id, me);
   res.json({ user: toPublicUser(target, me) });
 });
 

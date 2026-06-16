@@ -150,8 +150,8 @@ export function Profile() {
             <button className="btn btn-subtle btn-block" onClick={() => navigate('/app/edit')}>
               プロフィールを編集
             </button>
-            <button className="btn btn-subtle" onClick={() => navigate('/app/create')}>
-              投稿
+            <button className="btn btn-subtle footprint-cta" onClick={() => navigate('/app/footprints')}>
+              👣 あしあと
             </button>
           </>
         ) : (

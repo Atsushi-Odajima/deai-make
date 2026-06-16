@@ -1,11 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import {
   useBlock,
   useConversations,
-  useCreateStory,
   useFeed,
   useStoryFeed,
   useUnreadNotifications,
@@ -18,7 +17,6 @@ import { Sheet } from '../components/Sheet';
 import { StoryViewer } from '../components/StoryViewer';
 import { useToast } from '../components/Toast';
 import { IconDM, IconHeart, IconPlus } from '../components/icons';
-import { fileToDataUrl } from '../lib/image';
 import { useAuth } from '../store/auth';
 
 export function Home() {
@@ -27,12 +25,10 @@ export function Home() {
   const stories = useStoryFeed();
   const convos = useConversations();
   const unread = useUnreadNotifications();
-  const createStory = useCreateStory();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const show = useToast((s) => s.show);
   const block = useBlock();
-  const storyInput = useRef<HTMLInputElement>(null);
 
   const [menuPost, setMenuPost] = useState<Post | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
@@ -43,15 +39,6 @@ export function Home() {
   const posts = data?.posts ?? [];
   const groups = stories.data?.groups ?? [];
   const selfGroup = groups.find((g) => g.isSelf);
-
-  async function addStory(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      await createStory.mutateAsync({ imageUrl: await fileToDataUrl(file) });
-      show('ストーリーズに追加しました');
-    }
-    if (storyInput.current) storyInput.current.value = '';
-  }
 
   async function deletePost(post: Post) {
     await api.delete(`/posts/${post.id}`);
@@ -77,10 +64,10 @@ export function Home() {
       </header>
 
       <div className="stories-rail">
-        {/* Your story: tap ring to view, + to add. */}
+        {/* Your story: tap ring to view, + to add (text/emoji editor). */}
         <button
           className="story"
-          onClick={() => (selfGroup ? setViewerIndex(groups.indexOf(selfGroup)) : storyInput.current?.click())}
+          onClick={() => (selfGroup ? setViewerIndex(groups.indexOf(selfGroup)) : navigate('/app/create-story'))}
         >
           <span className={`story-ring${selfGroup?.hasUnseen ? '' : ' seen'} self`}>
             <Avatar src={me?.photos[0]} name={me?.displayName ?? ''} size={60} />
@@ -88,7 +75,7 @@ export function Home() {
               className="story-add"
               onClick={(e) => {
                 e.stopPropagation();
-                storyInput.current?.click();
+                navigate('/app/create-story');
               }}
             >
               <IconPlus width={14} height={14} strokeWidth={3} />
@@ -132,8 +119,6 @@ export function Home() {
           ))}
         </div>
       )}
-
-      <input ref={storyInput} type="file" accept="image/*" hidden onChange={addStory} />
 
       {viewerIndex !== null && groups[viewerIndex] && (
         <StoryViewer groups={groups} startIndex={viewerIndex} onClose={() => setViewerIndex(null)} />

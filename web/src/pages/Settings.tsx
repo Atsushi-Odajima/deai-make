@@ -81,6 +81,18 @@ export function Settings() {
         </section>
 
         <section className="settings-group">
+          <h4 className="section-label">コンテンツ</h4>
+          <button className="setting-row link-row" onClick={() => navigate('/app/archive')}>
+            <div className="setting-name">ストーリーズアーカイブ</div>
+            <span className="muted">›</span>
+          </button>
+          <button className="setting-row link-row" onClick={() => navigate('/app/footprints')}>
+            <div className="setting-name">あしあと</div>
+            <span className="muted">›</span>
+          </button>
+        </section>
+
+        <section className="settings-group">
           <h4 className="section-label">アカウント</h4>
           <div className="setting-row">
             <div className="setting-name">メールアドレス</div>

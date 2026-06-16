@@ -139,6 +139,21 @@ export function useSearchUsers(q: string) {
   });
 }
 
+export function useSearchPosts(q: string) {
+  return useQuery({
+    queryKey: ['search-posts', q],
+    queryFn: () => api.get<{ posts: Post[] }>(`/posts/search?q=${encodeURIComponent(q)}`),
+    enabled: q.trim().length > 0,
+  });
+}
+
+export function useFootprints() {
+  return useQuery({
+    queryKey: ['footprints'],
+    queryFn: () => api.get<{ users: PublicUser[] }>('/users/me/footprints'),
+  });
+}
+
 export function useSuggestedUsers() {
   return useQuery({
     queryKey: ['suggested'],
@@ -342,6 +357,22 @@ export function useCreateStory() {
     mutationFn: (input: { imageUrl: string; caption?: string }) =>
       api.post<{ ok: boolean }>('/stories', input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['stories'] }),
+  });
+}
+
+export interface ArchiveStory {
+  id: string;
+  imageUrl: string;
+  caption: string;
+  createdAt: string;
+  viewerCount: number;
+  expired: boolean;
+}
+
+export function useStoryArchive() {
+  return useQuery({
+    queryKey: ['story-archive'],
+    queryFn: () => api.get<{ items: ArchiveStory[] }>('/stories/archive'),
   });
 }
 

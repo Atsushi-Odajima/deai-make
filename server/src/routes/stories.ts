@@ -113,6 +113,19 @@ storiesRouter.get('/feed', (req: AuthedRequest, res) => {
   res.json({ groups });
 });
 
+// Archive: all of my own stories (active + expired), newest first.
+storiesRouter.get('/archive', (req: AuthedRequest, res) => {
+  const me = req.userId!;
+  const rows = db
+    .prepare('SELECT * FROM stories WHERE user_id = ? ORDER BY created_at DESC')
+    .all(me) as StoryRow[];
+  const items = rows.map((r) => ({
+    ...toItem(r, me),
+    expired: new Date(r.expires_at).getTime() < Date.now(),
+  }));
+  res.json({ items });
+});
+
 storiesRouter.post('/:id/view', (req: AuthedRequest, res) => {
   db.prepare('INSERT OR IGNORE INTO story_views (story_id, viewer_id, created_at) VALUES (?, ?, ?)').run(
     req.params.id,

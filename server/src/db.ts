@@ -188,6 +188,14 @@ CREATE TABLE IF NOT EXISTS bookmarks (
   PRIMARY KEY (user_id, post_id)
 );
 CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id, created_at);
+
+CREATE TABLE IF NOT EXISTS footprints (
+  target_id  TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  visitor_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (target_id, visitor_id)
+);
+CREATE INDEX IF NOT EXISTS idx_footprints_target ON footprints(target_id, created_at);
 `);
 
 export interface UserRow {
@@ -352,6 +360,15 @@ export function setPhotos(userId: string, urls: string[]): void {
     list.forEach((url, i) => stmt.run(crypto.randomUUID(), userId, url, i));
   });
   tx(clean);
+}
+
+/** Record (or refresh) a profile visit — a "footprint" left by `visitorId`. */
+export function recordFootprint(targetId: string, visitorId: string): void {
+  if (targetId === visitorId || isBlockedBetween(targetId, visitorId)) return;
+  db.prepare(
+    `INSERT INTO footprints (target_id, visitor_id, created_at) VALUES (?, ?, ?)
+     ON CONFLICT(target_id, visitor_id) DO UPDATE SET created_at = excluded.created_at`,
+  ).run(targetId, visitorId, new Date().toISOString());
 }
 
 export function getPostImages(postId: string): string[] {
