@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../api/hooks';
 import type { AppNotification } from '../api/types';
@@ -10,15 +11,27 @@ const TEXT: Record<AppNotification['type'], string> = {
   like: 'あなたの投稿にいいねしました',
   comment: 'あなたの投稿にコメントしました',
   board_comment: 'あなたのスレッドにコメントしました',
+  story_reaction: 'あなたのストーリーズにリアクションしました',
 };
+
+const FILTERS: { key: string; label: string; match: (t: AppNotification['type']) => boolean }[] = [
+  { key: 'all', label: 'すべて', match: () => true },
+  { key: 'follow', label: 'フォロー', match: (t) => t === 'follow' },
+  { key: 'like', label: 'いいね', match: (t) => t === 'like' },
+  { key: 'comment', label: 'コメント', match: (t) => t === 'comment' || t === 'board_comment' },
+  { key: 'reaction', label: 'リアクション', match: (t) => t === 'story_reaction' },
+];
 
 export function Notifications() {
   const { data, isLoading } = useNotifications();
   const navigate = useNavigate();
-  const items = data?.notifications ?? [];
+  const [filter, setFilter] = useState('all');
+
+  const active = FILTERS.find((f) => f.key === filter) ?? FILTERS[0];
+  const items = (data?.notifications ?? []).filter((n) => active.match(n.type));
 
   function open(n: AppNotification) {
-    if (n.type === 'follow') navigate(`/app/u/${n.actor.username}`);
+    if (n.type === 'follow' || n.type === 'story_reaction') navigate(`/app/u/${n.actor.username}`);
     else if (n.type === 'board_comment') navigate(`/app/board/${n.entityId}`);
     else navigate(`/app/post/${n.entityId}`);
   }
@@ -32,6 +45,18 @@ export function Notifications() {
         <span className="subpage-title">お知らせ</span>
         <span style={{ width: 40 }} />
       </header>
+
+      <div className="board-cats notif-filters">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            className={`board-cat${filter === f.key ? ' active' : ''}`}
+            onClick={() => setFilter(f.key)}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
 
       <div className="screen-scroll">
         {isLoading ? (

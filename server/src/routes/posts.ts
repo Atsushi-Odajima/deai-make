@@ -28,6 +28,9 @@ function mapPost(row: PostRow, me: string): Post {
   const likedByMe = !!db
     .prepare('SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?')
     .get(row.id, me);
+  const savedByMe = !!db
+    .prepare('SELECT 1 FROM bookmarks WHERE post_id = ? AND user_id = ?')
+    .get(row.id, me);
   const images = getPostImages(row.id);
   return {
     id: row.id,
@@ -39,6 +42,7 @@ function mapPost(row: PostRow, me: string): Post {
     likeCount,
     commentCount,
     likedByMe,
+    savedByMe,
   };
 }
 
@@ -108,6 +112,18 @@ postsRouter.get('/explore', (req: AuthedRequest, res) => {
   res.json({ posts: rows.map((r) => mapPost(r, me)) });
 });
 
+// Posts the current user has bookmarked (newest saved first).
+postsRouter.get('/saved', (req: AuthedRequest, res) => {
+  const me = req.userId!;
+  const rows = db
+    .prepare(
+      `SELECT p.* FROM bookmarks b JOIN posts p ON p.id = b.post_id
+       WHERE b.user_id = ? ORDER BY b.created_at DESC`,
+    )
+    .all(me) as PostRow[];
+  res.json({ posts: rows.map((r) => mapPost(r, me)) });
+});
+
 postsRouter.get('/user/:userId', (req: AuthedRequest, res) => {
   const me = req.userId!;
   if (isBlockedBetween(me, req.params.userId)) {
@@ -164,6 +180,32 @@ postsRouter.delete('/:id/like', (req: AuthedRequest, res) => {
     return;
   }
   db.prepare('DELETE FROM post_likes WHERE post_id = ? AND user_id = ?').run(req.params.id, me);
+  res.json({ post: mapPost(row, me) });
+});
+
+postsRouter.post('/:id/bookmark', (req: AuthedRequest, res) => {
+  const me = req.userId!;
+  const row = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id) as PostRow | undefined;
+  if (!row) {
+    res.status(404).json({ error: 'not_found' });
+    return;
+  }
+  db.prepare('INSERT OR IGNORE INTO bookmarks (user_id, post_id, created_at) VALUES (?, ?, ?)').run(
+    me,
+    req.params.id,
+    new Date().toISOString(),
+  );
+  res.json({ post: mapPost(row, me) });
+});
+
+postsRouter.delete('/:id/bookmark', (req: AuthedRequest, res) => {
+  const me = req.userId!;
+  const row = db.prepare('SELECT * FROM posts WHERE id = ?').get(req.params.id) as PostRow | undefined;
+  if (!row) {
+    res.status(404).json({ error: 'not_found' });
+    return;
+  }
+  db.prepare('DELETE FROM bookmarks WHERE user_id = ? AND post_id = ?').run(me, req.params.id);
   res.json({ post: mapPost(row, me) });
 });
 

@@ -1,11 +1,19 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useBlock, useFollow, useOpenConversation, useProfile, useUserPosts } from '../api/hooks';
+import {
+  useBlock,
+  useFollow,
+  useOpenConversation,
+  useProfile,
+  useSavedPosts,
+  useUserPosts,
+} from '../api/hooks';
 import { Avatar } from '../components/Avatar';
 import { ReportSheet } from '../components/ReportSheet';
 import { Sheet } from '../components/Sheet';
 import { useToast } from '../components/Toast';
 import {
+  IconBookmark,
   IconChevronLeft,
   IconGrid,
   IconLink,
@@ -26,6 +34,8 @@ export function Profile() {
   const user = data?.user;
   const isOwn = !!user && user.id === me?.id;
   const posts = useUserPosts(user?.id);
+  const saved = useSavedPosts();
+  const [tab, setTab] = useState<'posts' | 'saved'>('posts');
 
   const follow = useFollow();
   const openConv = useOpenConversation();
@@ -161,21 +171,52 @@ export function Profile() {
       </div>
 
       <div className="profile-grid-head">
-        <IconGrid width={20} height={20} />
-      </div>
-      {posts.data && posts.data.posts.length > 0 ? (
-        <div className="explore-grid tight">
-          {posts.data.posts.map((p) => (
-            <button key={p.id} className="explore-cell" onClick={() => navigate(`/app/post/${p.id}`)}>
-              <img src={p.imageUrl} alt={p.caption} />
+        {isOwn ? (
+          <>
+            <button
+              className={`grid-tab${tab === 'posts' ? ' active' : ''}`}
+              onClick={() => setTab('posts')}
+              aria-label="投稿"
+            >
+              <IconGrid width={22} height={22} />
             </button>
-          ))}
-        </div>
-      ) : (
-        <p className="empty-line muted" style={{ textAlign: 'center' }}>
-          まだ投稿はありません。
-        </p>
-      )}
+            <button
+              className={`grid-tab${tab === 'saved' ? ' active' : ''}`}
+              onClick={() => setTab('saved')}
+              aria-label="保存済み"
+            >
+              <IconBookmark width={22} height={22} />
+            </button>
+          </>
+        ) : (
+          <span className="grid-tab active">
+            <IconGrid width={20} height={20} />
+          </span>
+        )}
+      </div>
+      {(() => {
+        const list = isOwn && tab === 'saved' ? saved.data?.posts : posts.data?.posts;
+        if (list && list.length > 0) {
+          return (
+            <div className="explore-grid tight">
+              {list.map((p) => (
+                <button
+                  key={p.id}
+                  className="explore-cell"
+                  onClick={() => navigate(`/app/post/${p.id}`)}
+                >
+                  <img src={p.imageUrl} alt={p.caption} />
+                </button>
+              ))}
+            </div>
+          );
+        }
+        return (
+          <p className="empty-line muted" style={{ textAlign: 'center' }}>
+            {isOwn && tab === 'saved' ? '保存した投稿はありません。' : 'まだ投稿はありません。'}
+          </p>
+        );
+      })()}
 
       <Sheet open={menuOpen} onClose={() => setMenuOpen(false)} title={user.displayName}>
         <button

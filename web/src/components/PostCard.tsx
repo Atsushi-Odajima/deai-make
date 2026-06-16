@@ -1,15 +1,24 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToggleLike } from '../api/hooks';
+import { useToggleBookmark, useToggleLike } from '../api/hooks';
 import type { Post } from '../api/types';
 import { relativeTime } from '../lib/time';
 import { Avatar } from './Avatar';
-import { IconComment, IconDM, IconHeart, IconHeartFilled, IconMore } from './icons';
+import {
+  IconBookmark,
+  IconBookmarkFilled,
+  IconComment,
+  IconDM,
+  IconHeart,
+  IconHeartFilled,
+  IconMore,
+} from './icons';
 
 export function PostCard({ post, onMore }: { post: Post; onMore?: (post: Post) => void }) {
   const navigate = useNavigate();
   const toggle = useToggleLike();
+  const bookmark = useToggleBookmark();
   const [burst, setBurst] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const lastTap = useRef(0);
@@ -105,6 +114,13 @@ export function PostCard({ post, onMore }: { post: Post; onMore?: (post: Post) =
           aria-label="送る"
         >
           <IconDM width={25} height={25} />
+        </button>
+        <button
+          className={`post-act save${post.savedByMe ? ' saved' : ''}`}
+          onClick={() => bookmark.mutate({ postId: post.id, saved: post.savedByMe })}
+          aria-label="保存"
+        >
+          {post.savedByMe ? <IconBookmarkFilled width={24} height={24} /> : <IconBookmark width={24} height={24} />}
         </button>
       </div>
 

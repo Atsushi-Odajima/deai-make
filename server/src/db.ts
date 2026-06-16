@@ -172,6 +172,22 @@ CREATE TABLE IF NOT EXISTS notifications (
   read_at    TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at);
+
+CREATE TABLE IF NOT EXISTS story_reactions (
+  story_id   TEXT NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  reaction   TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (story_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS bookmarks (
+  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  post_id    TEXT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (user_id, post_id)
+);
+CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id, created_at);
 `);
 
 export interface UserRow {
@@ -355,7 +371,7 @@ export function setPostImages(postId: string, urls: string[]): void {
 export function createNotification(
   userId: string,
   actorId: string,
-  type: 'follow' | 'like' | 'comment' | 'board_comment',
+  type: 'follow' | 'like' | 'comment' | 'board_comment' | 'story_reaction',
   entityId = '',
 ): void {
   if (userId === actorId || isBlockedBetween(userId, actorId)) return;

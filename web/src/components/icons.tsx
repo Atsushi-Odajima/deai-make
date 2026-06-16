@@ -179,6 +179,18 @@ export const IconLink = (p: P) => (
   </svg>
 );
 
+export const IconBookmark = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z" />
+  </svg>
+);
+
+export const IconBookmarkFilled = (p: P) => (
+  <svg {...base({ fill: 'currentColor', ...p })}>
+    <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z" />
+  </svg>
+);
+
 export const IconMore = (p: P) => (
   <svg {...base({ fill: 'currentColor', stroke: 'none', ...p })}>
     <circle cx="5" cy="12" r="1.6" />

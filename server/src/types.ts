@@ -51,9 +51,15 @@ export interface Post {
   likeCount: number;
   commentCount: number;
   likedByMe: boolean;
+  savedByMe: boolean;
 }
 
-export type NotificationType = 'follow' | 'like' | 'comment' | 'board_comment';
+export type NotificationType =
+  | 'follow'
+  | 'like'
+  | 'comment'
+  | 'board_comment'
+  | 'story_reaction';
 
 export interface AppNotification {
   id: string;
@@ -65,12 +71,16 @@ export interface AppNotification {
   read: boolean;
 }
 
+export type StoryReaction = 'like' | 'akan' | 'bad' | 'helpful';
+
 export interface StoryItem {
   id: string;
   imageUrl: string;
   caption: string;
   createdAt: string;
   viewed: boolean;
+  myReaction: StoryReaction | null;
+  viewerCount: number; // meaningful to the story owner
 }
 
 export interface StoryGroup {
@@ -78,6 +88,12 @@ export interface StoryGroup {
   items: StoryItem[];
   hasUnseen: boolean;
   isSelf: boolean;
+}
+
+export interface StoryViewerEntry {
+  user: PostAuthor;
+  reaction: StoryReaction | null;
+  viewedAt: string;
 }
 
 export interface Comment {

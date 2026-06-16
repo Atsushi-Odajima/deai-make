@@ -50,9 +50,15 @@ export interface Post {
   likeCount: number;
   commentCount: number;
   likedByMe: boolean;
+  savedByMe: boolean;
 }
 
-export type NotificationType = 'follow' | 'like' | 'comment' | 'board_comment';
+export type NotificationType =
+  | 'follow'
+  | 'like'
+  | 'comment'
+  | 'board_comment'
+  | 'story_reaction';
 
 export interface AppNotification {
   id: string;
@@ -70,6 +76,8 @@ export interface StoryItem {
   caption: string;
   createdAt: string;
   viewed: boolean;
+  myReaction: string | null;
+  viewerCount: number;
 }
 
 export interface StoryGroup {
@@ -77,6 +85,12 @@ export interface StoryGroup {
   items: StoryItem[];
   hasUnseen: boolean;
   isSelf: boolean;
+}
+
+export interface StoryViewerEntry {
+  user: PostAuthor;
+  reaction: string | null;
+  viewedAt: string;
 }
 
 export interface Comment {

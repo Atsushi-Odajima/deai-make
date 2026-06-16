@@ -12,6 +12,7 @@ import type {
   Post,
   PublicUser,
   StoryGroup,
+  StoryViewerEntry,
 } from './types';
 
 /* ----------------------------- Posts / feed ----------------------------- */
@@ -65,6 +66,27 @@ export function useToggleLike() {
     onSuccess: ({ post }) => {
       patchPostEverywhere(qc, post);
     },
+  });
+}
+
+export function useToggleBookmark() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ postId, saved }: { postId: string; saved: boolean }) =>
+      saved
+        ? api.delete<{ post: Post }>(`/posts/${postId}/bookmark`)
+        : api.post<{ post: Post }>(`/posts/${postId}/bookmark`),
+    onSuccess: ({ post }) => {
+      patchPostEverywhere(qc, post);
+      qc.invalidateQueries({ queryKey: ['saved'] });
+    },
+  });
+}
+
+export function useSavedPosts() {
+  return useQuery({
+    queryKey: ['saved'],
+    queryFn: () => api.get<{ posts: Post[] }>('/posts/saved'),
   });
 }
 
@@ -328,5 +350,24 @@ export function useViewStory() {
   return useMutation({
     mutationFn: (storyId: string) => api.post(`/stories/${storyId}/view`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['stories'] }),
+  });
+}
+
+export function useReactStory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ storyId, reaction }: { storyId: string; reaction: string | null }) =>
+      reaction
+        ? api.post(`/stories/${storyId}/react`, { reaction })
+        : api.delete(`/stories/${storyId}/react`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['stories'] }),
+  });
+}
+
+export function useStoryViewers(storyId: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: ['story-viewers', storyId],
+    queryFn: () => api.get<{ viewers: StoryViewerEntry[] }>(`/stories/${storyId}/viewers`),
+    enabled: !!storyId && enabled,
   });
 }

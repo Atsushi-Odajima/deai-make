@@ -2130,3 +2130,162 @@
   right: 0;
   width: 65%;
 }
+
+/* =========================================================================
+   Bookmarks, story reactions + viewers, notification filters, profile tabs
+   ========================================================================= */
+
+/* Save (bookmark) button pushed to the right of the action row */
+.post-act.save {
+  margin-left: auto;
+}
+.post-act.save.saved {
+  color: var(--brand-600);
+}
+
+/* ---- Notification filter tabs ------------------------------------------ */
+.notif-filters {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* ---- Profile grid tabs (posts / saved) --------------------------------- */
+.profile-grid-head {
+  gap: 0;
+  padding: 0;
+}
+.grid-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 0;
+  color: var(--muted-2);
+  border-top: 1.5px solid transparent;
+  margin-top: -1px;
+}
+.grid-tab.active {
+  color: var(--ink);
+  border-top-color: var(--ink);
+}
+
+/* ---- Story reactions bar ----------------------------------------------- */
+.story-reactions {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 7;
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+.story-react {
+  flex: 1;
+  max-width: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 4px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+.story-react:active {
+  transform: scale(0.92);
+}
+.story-react.active {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--ink);
+  border-color: #fff;
+}
+.story-react-emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+.story-react-label {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ---- Story viewers button + panel -------------------------------------- */
+.story-viewers-btn {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.story-eye {
+  font-size: 15px;
+}
+.viewers-panel-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+}
+.viewers-panel {
+  width: 100%;
+  max-height: 66%;
+  background: var(--surface);
+  border-radius: 22px 22px 0 0;
+  padding: 10px 18px calc(20px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+}
+.viewers-list {
+  overflow-y: auto;
+}
+.viewer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 0;
+  text-align: left;
+}
+.viewer-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.viewer-name {
+  font-weight: 700;
+  font-size: 14.5px;
+}
+.viewer-handle {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.viewer-reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 18px;
+  flex: none;
+}
+.viewer-reaction span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-2);
+}

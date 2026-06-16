@@ -270,15 +270,45 @@ function run() {
   const storyTellers: [string, number][] = [
     ['mio', 2], ['aoi', 1], ['sora', 3], ['emi', 1], ['ren', 1], ['you', 1],
   ];
+  const youStoryIds: string[] = [];
   for (const [key, n] of storyTellers) {
     for (let i = 0; i < n; i++) {
       const sid = crypto.randomUUID();
+      if (key === 'you') youStoryIds.push(sid);
       const created = new Date(now.getTime() - (i + 1) * 90 * 60 * 1000);
       db.prepare(
         'INSERT INTO stories (id, user_id, image_url, caption, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
       ).run(
         sid, ids[key], image(`story-${sid}`), '',
         created.toISOString(), new Date(created.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+      );
+    }
+  }
+
+  // Viewers + reactions on your story, so the viewer list is populated.
+  if (youStoryIds[0]) {
+    const reactors: [string, string | null][] = [
+      ['mio', 'like'], ['aoi', 'helpful'], ['ren', 'akan'], ['sora', null], ['nao', 'bad'],
+    ];
+    reactors.forEach(([k, r], i) => {
+      const ts = new Date(now.getTime() - i * 12 * 60 * 1000).toISOString();
+      db.prepare('INSERT OR IGNORE INTO story_views (story_id, viewer_id, created_at) VALUES (?, ?, ?)').run(
+        youStoryIds[0], ids[k], ts,
+      );
+      if (r) {
+        db.prepare(
+          'INSERT OR IGNORE INTO story_reactions (story_id, user_id, reaction, created_at) VALUES (?, ?, ?, ?)',
+        ).run(youStoryIds[0], ids[k], r, ts);
+        createNotification(ids['you'], ids[k], 'story_reaction', youStoryIds[0]);
+      }
+    });
+  }
+
+  // A few bookmarks for you.
+  for (const k of ['mio', 'emi', 'kai']) {
+    if (postIds[k]?.[0]) {
+      db.prepare('INSERT OR IGNORE INTO bookmarks (user_id, post_id, created_at) VALUES (?, ?, ?)').run(
+        ids['you'], postIds[k][0], now.toISOString(),
       );
     }
   }
