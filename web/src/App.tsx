@@ -19,6 +19,7 @@ import { EditProfile } from './pages/EditProfile';
 import { Settings } from './pages/Settings';
 import { Conversations } from './pages/Conversations';
 import { Chat } from './pages/Chat';
+import { Notifications } from './pages/Notifications';
 
 function FullScreenLoader() {
   return (
@@ -74,6 +75,7 @@ export function App() {
             <Route path="/app/post/:postId" element={<PostDetail />} />
             <Route path="/app/dm" element={<Conversations />} />
             <Route path="/app/dm/:conversationId" element={<Chat />} />
+            <Route path="/app/notifications" element={<Notifications />} />
             <Route path="/app/edit" element={<EditProfile />} />
             <Route path="/app/settings" element={<Settings />} />
           </>

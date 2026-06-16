@@ -44,12 +44,40 @@ export interface PostAuthor {
 export interface Post {
   id: string;
   author: PostAuthor;
-  imageUrl: string;
+  imageUrl: string; // cover (images[0]) — kept for grids/thumbnails
+  images: string[]; // full carousel
   caption: string;
   createdAt: string;
   likeCount: number;
   commentCount: number;
   likedByMe: boolean;
+}
+
+export type NotificationType = 'follow' | 'like' | 'comment' | 'board_comment';
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  actor: PostAuthor;
+  entityId: string;
+  preview: string; // post cover thumbnail when relevant
+  createdAt: string;
+  read: boolean;
+}
+
+export interface StoryItem {
+  id: string;
+  imageUrl: string;
+  caption: string;
+  createdAt: string;
+  viewed: boolean;
+}
+
+export interface StoryGroup {
+  user: PostAuthor;
+  items: StoryItem[];
+  hasUnseen: boolean;
+  isSelf: boolean;
 }
 
 export interface Comment {

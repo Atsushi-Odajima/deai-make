@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCreatePost } from '../api/hooks';
 import { Avatar } from '../components/Avatar';
 import { useToast } from '../components/Toast';
-import { IconChevronLeft, IconPlus } from '../components/icons';
+import { IconChevronLeft, IconPlus, IconX } from '../components/icons';
 import { fileToDataUrl } from '../lib/image';
 import { useAuth } from '../store/auth';
 
@@ -14,19 +14,25 @@ export function CreatePost() {
   const show = useToast((s) => s.show);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [image, setImage] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>([]);
   const [caption, setCaption] = useState('');
 
   async function pick(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) setImage(await fileToDataUrl(file));
+    const files = Array.from(e.target.files ?? []);
+    const room = 10 - images.length;
+    const added = await Promise.all(files.slice(0, room).map((f) => fileToDataUrl(f)));
+    setImages((prev) => [...prev, ...added]);
     if (inputRef.current) inputRef.current.value = '';
   }
 
+  function removeImage(i: number) {
+    setImages((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
   async function submit() {
-    if (!image) return;
+    if (images.length === 0) return;
     try {
-      await create.mutateAsync({ imageUrl: image, caption: caption.trim() });
+      await create.mutateAsync({ imageUrls: images, caption: caption.trim() });
       show('投稿しました');
       navigate('/app/home');
     } catch {
@@ -44,7 +50,7 @@ export function CreatePost() {
         <button
           className="btn btn-ghost"
           style={{ height: 40, padding: '0 8px' }}
-          disabled={!image || create.isPending}
+          disabled={images.length === 0 || create.isPending}
           onClick={submit}
         >
           {create.isPending ? '…' : 'シェア'}
@@ -52,16 +58,28 @@ export function CreatePost() {
       </header>
 
       <div className="screen-scroll subpage-body">
-        {image ? (
-          <button className="create-image" onClick={() => inputRef.current?.click()}>
-            <img src={image} alt="" />
-            <span className="create-image-change">写真を変更</span>
-          </button>
-        ) : (
+        {images.length === 0 ? (
           <button className="create-image empty" onClick={() => inputRef.current?.click()}>
             <IconPlus width={32} height={32} />
-            <span>写真を選択</span>
+            <span>写真を選択（最大10枚）</span>
           </button>
+        ) : (
+          <div className="create-thumbs">
+            {images.map((src, i) => (
+              <div key={i} className="create-thumb">
+                <img src={src} alt="" />
+                {i === 0 && <span className="create-thumb-cover">表紙</span>}
+                <button className="create-thumb-x" onClick={() => removeImage(i)} aria-label="削除">
+                  <IconX width={14} height={14} />
+                </button>
+              </div>
+            ))}
+            {images.length < 10 && (
+              <button className="create-thumb add" onClick={() => inputRef.current?.click()}>
+                <IconPlus width={26} height={26} />
+              </button>
+            )}
+          </div>
         )}
 
         <div className="create-caption">
@@ -78,14 +96,14 @@ export function CreatePost() {
         <button
           className="btn btn-primary btn-block"
           style={{ marginTop: 20 }}
-          disabled={!image || create.isPending}
+          disabled={images.length === 0 || create.isPending}
           onClick={submit}
         >
           {create.isPending ? '投稿中…' : 'シェアする'}
         </button>
       </div>
 
-      <input ref={inputRef} type="file" accept="image/*" hidden onChange={pick} />
+      <input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={pick} />
     </div>
   );
 }

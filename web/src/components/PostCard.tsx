@@ -11,7 +11,14 @@ export function PostCard({ post, onMore }: { post: Post; onMore?: (post: Post) =
   const navigate = useNavigate();
   const toggle = useToggleLike();
   const [burst, setBurst] = useState(false);
+  const [activeImage, setActiveImage] = useState(0);
   const lastTap = useRef(0);
+  const images = post.images?.length ? post.images : [post.imageUrl];
+
+  function onScroll(e: React.UIEvent<HTMLDivElement>) {
+    const el = e.currentTarget;
+    setActiveImage(Math.round(el.scrollLeft / el.clientWidth));
+  }
 
   function like() {
     if (!post.likedByMe) toggle.mutate({ postId: post.id, liked: false });
@@ -47,8 +54,29 @@ export function PostCard({ post, onMore }: { post: Post; onMore?: (post: Post) =
         </button>
       </header>
 
-      <div className="post-image" onClick={onImageTap} onDoubleClick={like}>
-        <img src={post.imageUrl} alt={post.caption} draggable={false} />
+      <div className="post-image-wrap">
+        <div
+          className={`post-image${images.length > 1 ? ' carousel' : ''}`}
+          onClick={onImageTap}
+          onDoubleClick={like}
+          onScroll={images.length > 1 ? onScroll : undefined}
+        >
+          {images.map((src, i) => (
+            <img key={i} src={src} alt={post.caption} draggable={false} />
+          ))}
+        </div>
+        {images.length > 1 && (
+          <span className="carousel-count">
+            {activeImage + 1}/{images.length}
+          </span>
+        )}
+        {images.length > 1 && (
+          <div className="carousel-dots">
+            {images.map((_, i) => (
+              <span key={i} className={i === activeImage ? 'active' : ''} />
+            ))}
+          </div>
+        )}
         <AnimatePresence>
           {burst && (
             <motion.div

@@ -2,7 +2,7 @@
 // graph, likes & comments, a few DM threads, and a populated board (掲示板).
 import bcrypt from 'bcryptjs';
 import { config } from './config.js';
-import { db, setInterests, setPhotos } from './db.js';
+import { createNotification, db, setInterests, setPhotos, setPostImages } from './db.js';
 
 const PASSWORD = 'password123';
 
@@ -180,9 +180,13 @@ function run() {
       const pid = crypto.randomUUID();
       postIds[p.key].push(pid);
       const created = new Date(now.getTime() - (idx * 3 + pi) * 5 * 60 * 60 * 1000).toISOString();
+      // Every 3rd post is a multi-image carousel.
+      const count = pi % 3 === 0 ? 3 : 1;
+      const images = Array.from({ length: count }, (_, k) => image(`${pid}-${k}`));
       db.prepare(
         'INSERT INTO posts (id, user_id, image_url, caption, created_at) VALUES (?, ?, ?, ?, ?)',
-      ).run(pid, id, image(`${pid}`), caption, created);
+      ).run(pid, id, images[0], caption, created);
+      setPostImages(pid, images);
     });
   });
 
@@ -260,6 +264,32 @@ function run() {
         'INSERT INTO board_comments (id, board_post_id, user_id, body, created_at) VALUES (?, ?, ?, ?, ?)',
       ).run(crypto.randomUUID(), bid, ids[k], body, ts);
     });
+  }
+
+  // Active stories for several people you follow (+ a couple for yourself).
+  const storyTellers: [string, number][] = [
+    ['mio', 2], ['aoi', 1], ['sora', 3], ['emi', 1], ['ren', 1], ['you', 1],
+  ];
+  for (const [key, n] of storyTellers) {
+    for (let i = 0; i < n; i++) {
+      const sid = crypto.randomUUID();
+      const created = new Date(now.getTime() - (i + 1) * 90 * 60 * 1000);
+      db.prepare(
+        'INSERT INTO stories (id, user_id, image_url, caption, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
+      ).run(
+        sid, ids[key], image(`story-${sid}`), '',
+        created.toISOString(), new Date(created.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+      );
+    }
+  }
+
+  // Notifications addressed to "you".
+  createNotification(ids['you'], ids['mio'], 'follow', ids['mio']);
+  createNotification(ids['you'], ids['aoi'], 'follow', ids['aoi']);
+  if (postIds['you'][0]) {
+    createNotification(ids['you'], ids['ren'], 'like', postIds['you'][0]);
+    createNotification(ids['you'], ids['sora'], 'like', postIds['you'][0]);
+    createNotification(ids['you'], ids['emi'], 'comment', postIds['you'][0]);
   }
 
   console.log('Seed complete.');

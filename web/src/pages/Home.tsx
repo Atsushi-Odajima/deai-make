@@ -1,32 +1,57 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
-import { useBlock, useConversations, useFeed, useSuggestedUsers } from '../api/hooks';
+import {
+  useBlock,
+  useConversations,
+  useCreateStory,
+  useFeed,
+  useStoryFeed,
+  useUnreadNotifications,
+} from '../api/hooks';
 import type { Post } from '../api/types';
 import { Avatar } from '../components/Avatar';
 import { PostCard } from '../components/PostCard';
 import { ReportSheet } from '../components/ReportSheet';
 import { Sheet } from '../components/Sheet';
+import { StoryViewer } from '../components/StoryViewer';
 import { useToast } from '../components/Toast';
-import { IconDM } from '../components/icons';
+import { IconDM, IconHeart, IconPlus } from '../components/icons';
+import { fileToDataUrl } from '../lib/image';
 import { useAuth } from '../store/auth';
 
 export function Home() {
   const me = useAuth((s) => s.user);
   const { data, isLoading } = useFeed();
-  const suggested = useSuggestedUsers();
+  const stories = useStoryFeed();
   const convos = useConversations();
+  const unread = useUnreadNotifications();
+  const createStory = useCreateStory();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const show = useToast((s) => s.show);
   const block = useBlock();
+  const storyInput = useRef<HTMLInputElement>(null);
 
   const [menuPost, setMenuPost] = useState<Post | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
-  const unread = convos.data?.conversations.reduce((s, c) => s + c.unreadCount, 0) ?? 0;
+  const dmUnread = convos.data?.conversations.reduce((s, c) => s + c.unreadCount, 0) ?? 0;
+  const notifUnread = unread.data?.count ?? 0;
   const posts = data?.posts ?? [];
+  const groups = stories.data?.groups ?? [];
+  const selfGroup = groups.find((g) => g.isSelf);
+
+  async function addStory(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      await createStory.mutateAsync({ imageUrl: await fileToDataUrl(file) });
+      show('ストーリーズに追加しました');
+    }
+    if (storyInput.current) storyInput.current.value = '';
+  }
 
   async function deletePost(post: Post) {
     await api.delete(`/posts/${post.id}`);
@@ -40,25 +65,52 @@ export function Home() {
       <header className="topbar">
         <span className="wordmark">Mingle</span>
         <div className="topbar-actions">
+          <button className="icon-btn badge" onClick={() => navigate('/app/notifications')} aria-label="お知らせ">
+            <IconHeart width={22} height={22} />
+            {notifUnread > 0 && <span className="dot" />}
+          </button>
           <button className="icon-btn badge" onClick={() => navigate('/app/dm')} aria-label="メッセージ">
             <IconDM width={22} height={22} />
-            {unread > 0 && <span className="dot" />}
+            {dmUnread > 0 && <span className="dot" />}
           </button>
         </div>
       </header>
 
-      {(suggested.data?.users.length ?? 0) > 0 && (
-        <div className="stories-rail">
-          {suggested.data!.users.map((u) => (
-            <button key={u.id} className="story" onClick={() => navigate(`/app/u/${u.username}`)}>
-              <span className="story-ring">
-                <Avatar src={u.photos[0]} name={u.displayName} size={60} />
-              </span>
-              <span className="story-name">{u.username}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="stories-rail">
+        {/* Your story: tap ring to view, + to add. */}
+        <button
+          className="story"
+          onClick={() => (selfGroup ? setViewerIndex(groups.indexOf(selfGroup)) : storyInput.current?.click())}
+        >
+          <span className={`story-ring${selfGroup?.hasUnseen ? '' : ' seen'} self`}>
+            <Avatar src={me?.photos[0]} name={me?.displayName ?? ''} size={60} />
+            <span
+              className="story-add"
+              onClick={(e) => {
+                e.stopPropagation();
+                storyInput.current?.click();
+              }}
+            >
+              <IconPlus width={14} height={14} strokeWidth={3} />
+            </span>
+          </span>
+          <span className="story-name">あなた</span>
+        </button>
+
+        {groups
+          .filter((g) => !g.isSelf)
+          .map((g) => {
+            const idx = groups.indexOf(g);
+            return (
+              <button key={g.user.id} className="story" onClick={() => setViewerIndex(idx)}>
+                <span className={`story-ring${g.hasUnseen ? '' : ' seen'}`}>
+                  <Avatar src={g.user.avatar} name={g.user.displayName} size={60} />
+                </span>
+                <span className="story-name">{g.user.username}</span>
+              </button>
+            );
+          })}
+      </div>
 
       {isLoading ? (
         <div className="center-col">
@@ -79,6 +131,12 @@ export function Home() {
             <PostCard key={p.id} post={p} onMore={setMenuPost} />
           ))}
         </div>
+      )}
+
+      <input ref={storyInput} type="file" accept="image/*" hidden onChange={addStory} />
+
+      {viewerIndex !== null && groups[viewerIndex] && (
+        <StoryViewer groups={groups} startIndex={viewerIndex} onClose={() => setViewerIndex(null)} />
       )}
 
       <Sheet open={!!menuPost} onClose={() => setMenuPost(null)} title={menuPost?.author.displayName}>
@@ -105,12 +163,7 @@ export function Home() {
           </button>
         ) : (
           <>
-            <button
-              className="sheet-action"
-              onClick={() => {
-                setReportOpen(true);
-              }}
-            >
+            <button className="sheet-action" onClick={() => setReportOpen(true)}>
               通報する
             </button>
             <button

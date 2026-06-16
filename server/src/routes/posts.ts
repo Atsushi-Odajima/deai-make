@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, type AuthedRequest } from '../auth.js';
-import { db, getAuthor, isBlockedBetween } from '../db.js';
+import { createNotification, db, getAuthor, getPostImages, isBlockedBetween, setPostImages } from '../db.js';
 import { emitToUser } from '../realtime.js';
 import type { Comment, Post } from '../types.js';
 
@@ -28,10 +28,12 @@ function mapPost(row: PostRow, me: string): Post {
   const likedByMe = !!db
     .prepare('SELECT 1 FROM post_likes WHERE post_id = ? AND user_id = ?')
     .get(row.id, me);
+  const images = getPostImages(row.id);
   return {
     id: row.id,
     author: getAuthor(row.user_id),
     imageUrl: row.image_url,
+    images: images.length ? images : [row.image_url],
     caption: row.caption,
     createdAt: row.created_at,
     likeCount,
@@ -40,8 +42,11 @@ function mapPost(row: PostRow, me: string): Post {
   };
 }
 
+const oneImage = z.string().url().or(z.string().startsWith('data:image/'));
 const createSchema = z.object({
-  imageUrl: z.string().url().or(z.string().startsWith('data:image/')),
+  // Accept a single image or an array of up to 10 (carousel).
+  imageUrl: oneImage.optional(),
+  imageUrls: z.array(oneImage).min(1).max(10).optional(),
   caption: z.string().max(2200).optional(),
 });
 
@@ -51,10 +56,16 @@ postsRouter.post('/', (req: AuthedRequest, res) => {
     res.status(400).json({ error: 'invalid_input' });
     return;
   }
+  const images = parsed.data.imageUrls ?? (parsed.data.imageUrl ? [parsed.data.imageUrl] : []);
+  if (images.length === 0) {
+    res.status(400).json({ error: 'invalid_input' });
+    return;
+  }
   const id = crypto.randomUUID();
   db.prepare(
     'INSERT INTO posts (id, user_id, image_url, caption, created_at) VALUES (?, ?, ?, ?, ?)',
-  ).run(id, req.userId!, parsed.data.imageUrl, parsed.data.caption ?? '', new Date().toISOString());
+  ).run(id, req.userId!, images[0], parsed.data.caption ?? '', new Date().toISOString());
+  setPostImages(id, images);
   res.status(201).json({ post: mapPost(db.prepare('SELECT * FROM posts WHERE id = ?').get(id) as PostRow, req.userId!) });
 });
 
@@ -135,12 +146,13 @@ postsRouter.post('/:id/like', (req: AuthedRequest, res) => {
     res.status(404).json({ error: 'not_found' });
     return;
   }
-  db.prepare('INSERT OR IGNORE INTO post_likes (post_id, user_id, created_at) VALUES (?, ?, ?)').run(
-    req.params.id,
-    me,
-    new Date().toISOString(),
-  );
-  if (row.user_id !== me) emitToUser(row.user_id, 'post_like', { postId: row.id, from: me });
+  const result = db
+    .prepare('INSERT OR IGNORE INTO post_likes (post_id, user_id, created_at) VALUES (?, ?, ?)')
+    .run(req.params.id, me, new Date().toISOString());
+  if (row.user_id !== me && result.changes > 0) {
+    createNotification(row.user_id, me, 'like', row.id);
+    emitToUser(row.user_id, 'notification', {});
+  }
   res.json({ post: mapPost(row, me) });
 });
 
@@ -187,7 +199,10 @@ postsRouter.post('/:id/comments', (req: AuthedRequest, res) => {
   db.prepare(
     'INSERT INTO post_comments (id, post_id, user_id, body, created_at) VALUES (?, ?, ?, ?, ?)',
   ).run(id, req.params.id, me, parsed.data.body.trim(), now);
-  if (post.user_id !== me) emitToUser(post.user_id, 'post_comment', { postId: post.id, from: me });
+  if (post.user_id !== me) {
+    createNotification(post.user_id, me, 'comment', post.id);
+    emitToUser(post.user_id, 'notification', {});
+  }
   res.status(201).json({
     comment: { id, author: getAuthor(me), body: parsed.data.body.trim(), createdAt: now } as Comment,
   });

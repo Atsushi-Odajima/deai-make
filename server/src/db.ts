@@ -136,6 +136,42 @@ CREATE TABLE IF NOT EXISTS reports (
   detail      TEXT NOT NULL DEFAULT '',
   created_at  TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS post_images (
+  id        TEXT PRIMARY KEY,
+  post_id   TEXT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  url       TEXT NOT NULL,
+  position  INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_post_images ON post_images(post_id, position);
+
+CREATE TABLE IF NOT EXISTS stories (
+  id         TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  image_url  TEXT NOT NULL,
+  caption    TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_stories_user ON stories(user_id, created_at);
+
+CREATE TABLE IF NOT EXISTS story_views (
+  story_id   TEXT NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
+  viewer_id  TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (story_id, viewer_id)
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id         TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  actor_id   TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type       TEXT NOT NULL,
+  entity_id  TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL,
+  read_at    TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at);
 `);
 
 export interface UserRow {
@@ -300,6 +336,32 @@ export function setPhotos(userId: string, urls: string[]): void {
     list.forEach((url, i) => stmt.run(crypto.randomUUID(), userId, url, i));
   });
   tx(clean);
+}
+
+export function getPostImages(postId: string): string[] {
+  return db
+    .prepare('SELECT url FROM post_images WHERE post_id = ? ORDER BY position ASC')
+    .all(postId)
+    .map((r: any) => r.url as string);
+}
+
+export function setPostImages(postId: string, urls: string[]): void {
+  const clean = urls.filter(Boolean).slice(0, 10);
+  const stmt = db.prepare('INSERT INTO post_images(id, post_id, url, position) VALUES (?, ?, ?, ?)');
+  clean.forEach((url, i) => stmt.run(crypto.randomUUID(), postId, url, i));
+}
+
+/** Record a notification for `userId` triggered by `actorId`. No self-notifs. */
+export function createNotification(
+  userId: string,
+  actorId: string,
+  type: 'follow' | 'like' | 'comment' | 'board_comment',
+  entityId = '',
+): void {
+  if (userId === actorId || isBlockedBetween(userId, actorId)) return;
+  db.prepare(
+    'INSERT INTO notifications (id, user_id, actor_id, type, entity_id, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+  ).run(crypto.randomUUID(), userId, actorId, type, entityId, new Date().toISOString());
 }
 
 export function mapMessage(row: any): ChatMessage {

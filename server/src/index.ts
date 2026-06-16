@@ -10,6 +10,8 @@ import { postsRouter } from './routes/posts.js';
 import { conversationsRouter } from './routes/conversations.js';
 import { messagesRouter } from './routes/messages.js';
 import { boardRouter } from './routes/board.js';
+import { notificationsRouter } from './routes/notifications.js';
+import { storiesRouter } from './routes/stories.js';
 import { safetyRouter } from './routes/safety.js';
 
 const app = express();
@@ -32,6 +34,8 @@ app.use('/api/posts', postsRouter);
 app.use('/api/conversations', conversationsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/board', boardRouter);
+app.use('/api/notifications', notificationsRouter);
+app.use('/api/stories', storiesRouter);
 app.use('/api/safety', safetyRouter);
 
 app.use((_req, res) => res.status(404).json({ error: 'not_found' }));

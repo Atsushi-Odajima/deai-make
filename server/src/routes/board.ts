@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, type AuthedRequest } from '../auth.js';
-import { db, getAuthor, isBlockedBetween } from '../db.js';
+import { createNotification, db, getAuthor, isBlockedBetween } from '../db.js';
 import { emitToUser } from '../realtime.js';
 import type { BoardComment, BoardPost } from '../types.js';
 
@@ -129,7 +129,10 @@ boardRouter.post('/:id/comments', (req: AuthedRequest, res) => {
   db.prepare(
     'INSERT INTO board_comments (id, board_post_id, user_id, body, created_at) VALUES (?, ?, ?, ?, ?)',
   ).run(id, req.params.id, me, parsed.data.body.trim(), now);
-  if (post.user_id !== me) emitToUser(post.user_id, 'board_comment', { boardId: post.id, from: me });
+  if (post.user_id !== me) {
+    createNotification(post.user_id, me, 'board_comment', post.id);
+    emitToUser(post.user_id, 'notification', {});
+  }
   res.status(201).json({
     comment: { id, author: getAuthor(me), body: parsed.data.body.trim(), createdAt: now } as BoardComment,
   });

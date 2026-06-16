@@ -30,12 +30,18 @@ export function RealtimeBridge() {
       }
     };
     const onFollow = () => qc.invalidateQueries({ queryKey: ['profile'] });
+    const onNotification = () => {
+      qc.invalidateQueries({ queryKey: ['notifications-unread'] });
+      qc.invalidateQueries({ queryKey: ['notifications'] });
+    };
 
     socket.on('message', onMessage);
     socket.on('follow', onFollow);
+    socket.on('notification', onNotification);
     return () => {
       socket.off('message', onMessage);
       socket.off('follow', onFollow);
+      socket.off('notification', onNotification);
     };
   }, [qc, show, location.pathname]);
 

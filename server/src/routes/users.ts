@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireAuth, type AuthedRequest } from '../auth.js';
 import {
+  createNotification,
   db,
   getUserRow,
   isBlockedBetween,
@@ -165,11 +166,13 @@ usersRouter.post('/:id/follow', (req: AuthedRequest, res) => {
     res.status(400).json({ error: 'invalid_target' });
     return;
   }
-  db.prepare('INSERT OR IGNORE INTO follows (follower_id, following_id, created_at) VALUES (?, ?, ?)').run(
-    me,
-    target,
-    new Date().toISOString(),
-  );
+  const result = db
+    .prepare('INSERT OR IGNORE INTO follows (follower_id, following_id, created_at) VALUES (?, ?, ?)')
+    .run(me, target, new Date().toISOString());
+  if (result.changes > 0) {
+    createNotification(target, me, 'follow', me);
+    emitToUser(target, 'notification', {});
+  }
   emitToUser(target, 'follow', { from: me });
   res.json({ user: toPublicUser(getUserRow(target)!, me) });
 });

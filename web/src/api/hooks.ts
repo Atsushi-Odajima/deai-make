@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client';
 import { useAuth } from '../store/auth';
 import type {
+  AppNotification,
   BoardComment,
   BoardPost,
   ChatMessage,
@@ -10,6 +11,7 @@ import type {
   MeUser,
   Post,
   PublicUser,
+  StoryGroup,
 } from './types';
 
 /* ----------------------------- Posts / feed ----------------------------- */
@@ -69,7 +71,7 @@ export function useToggleLike() {
 export function useCreatePost() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { imageUrl: string; caption?: string }) =>
+    mutationFn: (input: { imageUrls: string[]; caption?: string }) =>
       api.post<{ post: Post }>('/posts', input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['feed'] });
@@ -276,5 +278,55 @@ export function useOpenConversation() {
   return useMutation({
     mutationFn: (userId: string) =>
       api.post<{ conversation: ConversationSummary }>('/conversations', { userId }),
+  });
+}
+
+/* ---------------------------- Notifications ----------------------------- */
+
+export function useNotifications() {
+  const qc = useQueryClient();
+  return useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const res = await api.get<{ notifications: AppNotification[] }>('/notifications');
+      // Opening the list clears the unread badge server-side.
+      qc.setQueryData(['notifications-unread'], { count: 0 });
+      return res;
+    },
+  });
+}
+
+export function useUnreadNotifications() {
+  return useQuery({
+    queryKey: ['notifications-unread'],
+    queryFn: () => api.get<{ count: number }>('/notifications/unread-count'),
+    refetchInterval: 1000 * 25,
+  });
+}
+
+/* ------------------------------- Stories -------------------------------- */
+
+export function useStoryFeed() {
+  return useQuery({
+    queryKey: ['stories'],
+    queryFn: () => api.get<{ groups: StoryGroup[] }>('/stories/feed'),
+    refetchOnMount: 'always',
+  });
+}
+
+export function useCreateStory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { imageUrl: string; caption?: string }) =>
+      api.post<{ ok: boolean }>('/stories', input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['stories'] }),
+  });
+}
+
+export function useViewStory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (storyId: string) => api.post(`/stories/${storyId}/view`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['stories'] }),
   });
 }
