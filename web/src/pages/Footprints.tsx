@@ -1,11 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { useFollow, useFootprints } from '../api/hooks';
+import { useFootprints } from '../api/hooks';
 import { Avatar } from '../components/Avatar';
 import { IconChevronLeft } from '../components/icons';
 
 export function Footprints() {
   const { data, isLoading } = useFootprints();
-  const follow = useFollow();
   const navigate = useNavigate();
   const users = data?.users ?? [];
 
@@ -34,27 +33,21 @@ export function Footprints() {
         ) : (
           <div className="user-results">
             {users.map((u) => (
-              <div key={u.id} className="user-row footprint-row">
-                <button
-                  className="footprint-main"
-                  onClick={() => navigate(`/app/u/${u.username}`)}
-                >
-                  <Avatar src={u.photos[0]} name={u.displayName} size={48} />
-                  <div className="user-row-text">
-                    <span className="user-row-username">
-                      {u.username}
-                      {u.verified && <span className="mini-verified">✓</span>}
-                    </span>
-                    <span className="user-row-name">{u.displayName}</span>
-                  </div>
-                </button>
-                <button
-                  className={`btn ${u.isFollowing ? 'btn-subtle' : 'btn-primary'} footprint-follow`}
-                  onClick={() => follow.mutate({ userId: u.id, following: u.isFollowing })}
-                >
-                  {u.isFollowing ? 'フォロー中' : 'フォロー'}
-                </button>
-              </div>
+              <button
+                key={u.id}
+                className="user-row"
+                onClick={() => navigate(`/app/u/${u.username}`)}
+              >
+                <Avatar src={u.photos[0]} name={u.displayName} size={48} />
+                <div className="user-row-text">
+                  <span className="user-row-username">
+                    {u.username}
+                    {u.verified && <span className="mini-verified">✓</span>}
+                  </span>
+                  <span className="user-row-name">{u.displayName}</span>
+                </div>
+                {u.isFollowing && <span className="follows-you-tag">フォロー中</span>}
+              </button>
             ))}
           </div>
         )}

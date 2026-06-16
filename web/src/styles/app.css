@@ -2502,3 +2502,50 @@
   color: var(--ink);
   text-align: right;
 }
+
+/* ---- Search filter UI --------------------------------------------------- */
+.search-bar-wrap {
+  gap: 8px;
+}
+.filter-btn {
+  flex: none;
+  position: relative;
+}
+.filter-btn.on {
+  color: var(--brand-600);
+  background: rgba(37, 99, 235, 0.1);
+}
+.filter-count {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--brand-600);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 10px 14px 4px;
+}
+.filter-chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--brand-700);
+}
+.filter-chip.clear {
+  background: var(--surface-2);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}

@@ -33,6 +33,10 @@ export interface MeUser extends PublicUser {
   email: string;
   birthdate: string | null;
   showAge: boolean;
+  showOccupation: boolean;
+  showBodyType: boolean;
+  showWeight: boolean;
+  showHeight: boolean;
   discoveryEnabled: boolean;
   createdAt: string;
 }

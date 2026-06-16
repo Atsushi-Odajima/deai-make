@@ -28,6 +28,10 @@ export function Settings() {
 
   const [discovery, setDiscovery] = useState(user?.discoveryEnabled ?? true);
   const [showAge, setShowAge] = useState(user?.showAge ?? true);
+  const [showOccupation, setShowOccupation] = useState(user?.showOccupation ?? true);
+  const [showHeight, setShowHeight] = useState(user?.showHeight ?? true);
+  const [showBodyType, setShowBodyType] = useState(user?.showBodyType ?? true);
+  const [showWeight, setShowWeight] = useState(user?.showWeight ?? true);
 
   function patch(p: Record<string, unknown>, message?: string) {
     update.mutate(p, { onSuccess: () => message && show(message) });
@@ -65,19 +69,31 @@ export function Settings() {
               }}
             />
           </div>
-          <div className="setting-row">
-            <div>
-              <div className="setting-name">年齢を表示する</div>
-              <div className="setting-desc">プロフィールに年齢を表示します</div>
+        </section>
+
+        <section className="settings-group">
+          <h4 className="section-label">プロフィール項目の公開</h4>
+          <p className="setting-desc" style={{ margin: '-4px 0 6px' }}>
+            オフにした項目は他の人には表示されず、検索の絞り込み対象からも外れます。
+          </p>
+          {[
+            { name: '年齢', checked: showAge, set: setShowAge, key: 'showAge' },
+            { name: '仕事', checked: showOccupation, set: setShowOccupation, key: 'showOccupation' },
+            { name: '身長', checked: showHeight, set: setShowHeight, key: 'showHeight' },
+            { name: '体型', checked: showBodyType, set: setShowBodyType, key: 'showBodyType' },
+            { name: '体重', checked: showWeight, set: setShowWeight, key: 'showWeight' },
+          ].map((row) => (
+            <div className="setting-row" key={row.key}>
+              <div className="setting-name">{row.name}を公開する</div>
+              <Toggle
+                checked={row.checked}
+                onChange={(v) => {
+                  row.set(v);
+                  patch({ [row.key]: v });
+                }}
+              />
             </div>
-            <Toggle
-              checked={showAge}
-              onChange={(v) => {
-                setShowAge(v);
-                patch({ showAge: v });
-              }}
-            />
-          </div>
+          ))}
         </section>
 
         <section className="settings-group">

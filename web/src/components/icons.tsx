@@ -191,6 +191,12 @@ export const IconBookmarkFilled = (p: P) => (
   </svg>
 );
 
+export const IconFilter = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M4 6h16M7 12h10M10 18h4" />
+  </svg>
+);
+
 export const IconMore = (p: P) => (
   <svg {...base({ fill: 'currentColor', stroke: 'none', ...p })}>
     <circle cx="5" cy="12" r="1.6" />

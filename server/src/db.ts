@@ -28,7 +28,11 @@ CREATE TABLE IF NOT EXISTS users (
   body_type     TEXT NOT NULL DEFAULT '',
   weight_note   TEXT NOT NULL DEFAULT '',
   height        INTEGER NOT NULL DEFAULT 0,
-  show_age      INTEGER NOT NULL DEFAULT 1,
+  show_age          INTEGER NOT NULL DEFAULT 1,
+  show_occupation   INTEGER NOT NULL DEFAULT 1,
+  show_body_type    INTEGER NOT NULL DEFAULT 1,
+  show_weight       INTEGER NOT NULL DEFAULT 1,
+  show_height       INTEGER NOT NULL DEFAULT 1,
   discovery_enabled INTEGER NOT NULL DEFAULT 1,
   verified      INTEGER NOT NULL DEFAULT 0,
   created_at    TEXT NOT NULL,
@@ -213,6 +217,10 @@ ensureColumn('users', 'occupation', "TEXT NOT NULL DEFAULT ''");
 ensureColumn('users', 'body_type', "TEXT NOT NULL DEFAULT ''");
 ensureColumn('users', 'weight_note', "TEXT NOT NULL DEFAULT ''");
 ensureColumn('users', 'height', 'INTEGER NOT NULL DEFAULT 0');
+ensureColumn('users', 'show_occupation', 'INTEGER NOT NULL DEFAULT 1');
+ensureColumn('users', 'show_body_type', 'INTEGER NOT NULL DEFAULT 1');
+ensureColumn('users', 'show_weight', 'INTEGER NOT NULL DEFAULT 1');
+ensureColumn('users', 'show_height', 'INTEGER NOT NULL DEFAULT 1');
 
 export interface UserRow {
   id: string;
@@ -232,6 +240,10 @@ export interface UserRow {
   weight_note: string;
   height: number;
   show_age: number;
+  show_occupation: number;
+  show_body_type: number;
+  show_weight: number;
+  show_height: number;
   discovery_enabled: number;
   verified: number;
   created_at: string;
@@ -285,19 +297,21 @@ export function toPublicUser(row: UserRow, viewerId?: string): PublicUser {
         .prepare('SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?')
         .get(row.id, viewerId)
     : false;
+  // The owner always sees their own fields; others see them only when public.
+  const selfView = viewerId === row.id;
   return {
     id: row.id,
     username: row.username ?? row.id.slice(0, 8),
     displayName: row.display_name,
-    age: row.show_age ? ageFromBirthdate(row.birthdate) : null,
+    age: selfView || row.show_age ? ageFromBirthdate(row.birthdate) : null,
     bio: row.bio,
     headline: row.headline,
     location: row.location,
     link: row.link,
-    occupation: row.occupation,
-    bodyType: row.body_type,
-    weightNote: row.weight_note,
-    height: row.height,
+    occupation: selfView || row.show_occupation ? row.occupation : '',
+    bodyType: selfView || row.show_body_type ? row.body_type : '',
+    weightNote: selfView || row.show_weight ? row.weight_note : '',
+    height: selfView || row.show_height ? row.height : 0,
     gender: row.gender as Gender,
     pronouns: row.pronouns,
     photos: getPhotos(row.id),
@@ -319,6 +333,10 @@ export function toMeUser(row: UserRow): MeUser {
     email: row.email,
     birthdate: row.birthdate,
     showAge: !!row.show_age,
+    showOccupation: !!row.show_occupation,
+    showBodyType: !!row.show_body_type,
+    showWeight: !!row.show_weight,
+    showHeight: !!row.show_height,
     discoveryEnabled: !!row.discovery_enabled,
     createdAt: row.created_at,
   };

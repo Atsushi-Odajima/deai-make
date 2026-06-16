@@ -132,10 +132,24 @@ function patchPostEverywhere(qc: ReturnType<typeof useQueryClient>, post: Post) 
 
 /* ------------------------------- Users ---------------------------------- */
 
-export function useSearchUsers(q: string) {
+export interface UserSearchFilters {
+  occupation?: string;
+  bodyType?: string;
+  heightMin?: number;
+  heightMax?: number;
+}
+
+export function useSearchUsers(q: string, filters: UserSearchFilters = {}) {
+  const params = new URLSearchParams();
+  if (q.trim()) params.set('q', q.trim());
+  if (filters.occupation) params.set('occupation', filters.occupation);
+  if (filters.bodyType) params.set('bodyType', filters.bodyType);
+  if (filters.heightMin) params.set('heightMin', String(filters.heightMin));
+  if (filters.heightMax) params.set('heightMax', String(filters.heightMax));
+  const qs = params.toString();
   return useQuery({
-    queryKey: ['search', q],
-    queryFn: () => api.get<{ users: PublicUser[] }>(`/users/search?q=${encodeURIComponent(q)}`),
+    queryKey: ['search', qs],
+    queryFn: () => api.get<{ users: PublicUser[] }>(`/users/search?${qs}`),
   });
 }
 

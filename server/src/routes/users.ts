@@ -37,6 +37,10 @@ const updateSchema = z.object({
   pronouns: z.string().max(40).optional(),
   gender: z.enum(['female', 'male', 'nonbinary', 'other', 'unspecified']).optional(),
   showAge: z.boolean().optional(),
+  showOccupation: z.boolean().optional(),
+  showBodyType: z.boolean().optional(),
+  showWeight: z.boolean().optional(),
+  showHeight: z.boolean().optional(),
   discoveryEnabled: z.boolean().optional(),
   photos: z.array(z.string().url().or(z.string().startsWith('data:image/'))).max(9).optional(),
   interests: z.array(z.string().min(1).max(30)).max(12).optional(),
@@ -56,6 +60,10 @@ const FIELD_MAP: Record<string, string> = {
   pronouns: 'pronouns',
   gender: 'gender',
   showAge: 'show_age',
+  showOccupation: 'show_occupation',
+  showBodyType: 'show_body_type',
+  showWeight: 'show_weight',
+  showHeight: 'show_height',
   discoveryEnabled: 'discovery_enabled',
 };
 
@@ -98,30 +106,39 @@ usersRouter.patch('/me', (req: AuthedRequest, res) => {
   res.json({ user: toMeUser(getUserRow(userId)!) });
 });
 
-// Search members by name, @username, or interest.
+// Search members by text (name / @username / headline / interest) with optional
+// occupation, body type, and height filters. A field filter only matches users
+// who keep that field public (so private fields aren't leaked via search).
 usersRouter.get('/search', (req: AuthedRequest, res) => {
   const me = req.userId!;
   const q = String(req.query.q ?? '').trim();
-  const like = `%${q}%`;
-  const rows = (
-    q
-      ? db
-          .prepare(
-            `SELECT DISTINCT u.* FROM users u
-             LEFT JOIN user_interests ui ON ui.user_id = u.id
-             LEFT JOIN interests i ON i.id = ui.interest_id
-             WHERE u.id != @me AND u.discovery_enabled = 1
-               AND (u.display_name LIKE @like OR u.username LIKE @like OR u.headline LIKE @like OR i.name LIKE @like)
-             ORDER BY u.last_active_at DESC LIMIT 40`,
-          )
-          .all({ me, like })
-      : db
-          .prepare(
-            `SELECT * FROM users WHERE id != ? AND discovery_enabled = 1
-             ORDER BY last_active_at DESC LIMIT 30`,
-          )
-          .all(me)
-  ) as UserRow[];
+  const occupation = String(req.query.occupation ?? '').trim();
+  const bodyType = String(req.query.bodyType ?? '').trim();
+  const heightMin = Number(req.query.heightMin ?? 0) || 0;
+  const heightMax = Number(req.query.heightMax ?? 0) || 0;
+
+  const rows = db
+    .prepare(
+      `SELECT u.* FROM users u
+       WHERE u.id != @me AND u.discovery_enabled = 1
+         AND (@q = '' OR u.display_name LIKE @like OR u.username LIKE @like OR u.headline LIKE @like
+              OR EXISTS (SELECT 1 FROM user_interests ui JOIN interests i ON i.id = ui.interest_id
+                         WHERE ui.user_id = u.id AND i.name LIKE @like))
+         AND (@occ = '' OR (u.occupation = @occ AND u.show_occupation = 1))
+         AND (@body = '' OR (u.body_type = @body AND u.show_body_type = 1))
+         AND (@hmin = 0 OR (u.height >= @hmin AND u.height > 0 AND u.show_height = 1))
+         AND (@hmax = 0 OR (u.height <= @hmax AND u.height > 0 AND u.show_height = 1))
+       ORDER BY u.last_active_at DESC LIMIT 40`,
+    )
+    .all({
+      me,
+      q,
+      like: `%${q}%`,
+      occ: occupation,
+      body: bodyType,
+      hmin: heightMin,
+      hmax: heightMax,
+    }) as UserRow[];
 
   const filtered = rows.filter((r) => !isBlockedBetween(me, r.id));
   res.json({ users: filtered.map((r) => toPublicUser(r, me)) });

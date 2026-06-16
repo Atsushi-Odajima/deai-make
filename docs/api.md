@@ -16,8 +16,8 @@
 
 | Method | Path | 認証 | 説明 |
 | --- | --- | --- | --- |
-| PATCH | `/users/me` | ✓ | プロフィール更新（`displayName, username, headline, bio, location, link, occupation, bodyType, weightNote, height, pronouns, gender, showAge, discoveryEnabled, photos[], interests[]`）。 |
-| GET | `/users/search?q=` | ✓ | 名前 / @ユーザー名 / 趣味で検索。 |
+| PATCH | `/users/me` | ✓ | プロフィール更新（`displayName, username, headline, bio, location, link, occupation, bodyType, weightNote, height, pronouns, gender, showAge, showOccupation, showBodyType, showWeight, showHeight, discoveryEnabled, photos[], interests[]`）。`show*` は項目ごとの公開フラグ。非公開項目は他ユーザーへのレスポンスでマスクされる。 |
+| GET | `/users/search?q=&occupation=&bodyType=&heightMin=&heightMax=` | ✓ | 名前 / @ユーザー名 / 趣味のテキスト検索＋仕事・体型・身長での絞り込み（非公開項目は絞り込み対象外）。 |
 | GET | `/users/me/footprints` | ✓ | あしあと：直近の訪問者（最大20人）。 |
 | GET | `/users/suggested` | ✓ | おすすめユーザー（フォロワー数順）。 |
 | GET | `/users/:idOrUsername` | ✓ | プロフィール（`PublicUser`、フォロー数・投稿数・isFollowing 等を含む）。 |
