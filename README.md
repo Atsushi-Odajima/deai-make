@@ -11,6 +11,13 @@ Mingle は Instagram ライクな投稿フィードを中心に、**恋愛・異
 
 ---
 
+## 実装範囲と確認先
+
+- Web版の試作であり、iOSネイティブアプリは実装していません。
+- 年齢入力・ブロック・通報の実装は、実サービスの本人確認やモデレーション運用の完了を意味しません。
+
+実装箇所：[server/src/routes](./server/src/routes) / [server/src/realtime.ts](./server/src/realtime.ts) / [web/src/pages](./web/src/pages) / [server/src/seed.ts](./server/src/seed.ts)。
+
 ## ✨ 主な機能
 
 | 機能 | 説明 |
@@ -122,7 +129,7 @@ cd web && npm run build      # dist/ に静的ファイルを出力
 ```
 
 本番では web の静的ファイルを任意のホスティングに、API を Node 環境にデプロイし、
-リバースプロキシで `/api` と `/socket.io` を API に向ければそのまま動きます。
+リバースプロキシで `/api` と `/socket.io` を API に向ければ配備できます。公開前に認証・Origin・秘密鍵・保存先を設定し、動作とアクセス制御を確認してください。
 
 ---
 
